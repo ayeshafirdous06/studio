@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -125,6 +126,9 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {isLoadingColleges && <SelectItem value="loading" disabled>Loading...</SelectItem>}
+                  {!isLoadingColleges && colleges && colleges.length === 0 && (
+                    <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
+                  )}
                   {colleges && colleges.map((college) => (
                     <SelectItem key={college.id} value={college.id}>
                       {college.name}
