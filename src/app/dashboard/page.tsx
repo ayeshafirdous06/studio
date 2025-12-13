@@ -139,26 +139,22 @@ export default function DashboardPage() {
                             const providerAvatar = placeholderImages.find(p => p.id === provider.avatarId);
                             return (
                                 <Card key={provider.id}>
-                                    <CardHeader>
-                                        <div className="flex items-center gap-4">
-                                            <Avatar className="h-16 w-16">
-                                                {providerAvatar && <AvatarImage src={providerAvatar.imageUrl} alt={provider.name} />}
-                                                <AvatarFallback className="text-xl">{provider.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1">
-                                                <CardTitle>{provider.name}</CardTitle>
-                                                <p className="text-sm text-muted-foreground">@{provider.username}</p>
-                                            </div>
-                                        </div>
+                                    <CardHeader className="items-center text-center">
+                                        <CardTitle className="text-2xl">{provider.name}</CardTitle>
+                                        <p className="text-sm text-muted-foreground">@{provider.username}</p>
+                                        <Avatar className="h-24 w-24 mt-4">
+                                            {providerAvatar && <AvatarImage src={providerAvatar.imageUrl} alt={provider.name} />}
+                                            <AvatarFallback className="text-3xl">{provider.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
                                     </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{provider.tagline}</p>
-                                        <div className="flex flex-wrap gap-2 mb-4">
-                                            {provider.skills.slice(0, 4).map((skill:string) => (
+                                    <CardContent className="text-center">
+                                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 h-10">{provider.tagline}</p>
+                                        <div className="flex flex-wrap gap-2 justify-center mb-4 min-h-[52px]">
+                                            {provider.skills.slice(0, 3).map((skill:string) => (
                                                 <Badge key={skill} variant="secondary">{skill}</Badge>
                                             ))}
                                         </div>
-                                         <div className="flex items-center">
+                                         <div className="flex items-center justify-center">
                                             <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-1" />
                                             <span className="font-bold">{provider.rating.toFixed(1)}</span>
                                             <span className="text-muted-foreground ml-1">({provider.reviews} reviews)</span>
