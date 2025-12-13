@@ -1,10 +1,10 @@
 {
   "placeholderImages": [
     {
-      "id": "hero-students-collaborating",
-      "description": "Students collaborating on a project",
-      "imageUrl": "https://images.unsplash.com/photo-1557734864-c78b6dfef1b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxzdHVkZW50cyUyMGNvbGxhYm9yYXRpbmd8ZW58MHx8fHwxNzY1NjIyNTUyfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "students collaborating"
+      "id": "hero-charminar",
+      "description": "Charminar in Hyderabad at dusk",
+      "imageUrl": "https://images.unsplash.com/photo-1582515072031-6c5333a9486d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxDaGFybWluYXJ8ZW58MHx8fHwxNzY1NzI0MTMxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "Charminar Hyderabad"
     },
     {
       "id": "avatar-1",
@@ -63,7 +63,7 @@
     {
       "id": "avatar-car-2",
       "description": "Car avatar 2",
-      "imageUrl": "https://images.unsplash.com/photo-1725916631387-9f48fae4296b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXIlMjBpbGx1c3RyYXRpb258ZW58MHx8fHwxNzY1NjMyNjc5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1725916631387-9f48fae4296b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXIlMjBpbGx1c3RyYXRpb258ZW58MHx8fHwxNzY1NjMyNjc5fDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "car illustration"
     },
     {
@@ -87,55 +87,55 @@
     {
       "id": "avatar-alien-2",
       "description": "Alien avatar 2",
-      "imageUrl": "https://images.unsplash.com/photo-1701025812558-ca9ca4e24d71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbGllbiUyMGNhcnRvb258ZW58MHx8fHwxNzY1NjMzMzc2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1701025812558-ca9ca4e24d71?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhbGllbiUyMGNhcnRvb258ZW58MHx8fHwxNzY1NjMzMzc2fDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "alien cartoon"
     },
     {
       "id": "avatar-robot-1",
       "description": "Robot avatar 1",
-      "imageUrl": "https://images.unsplash.com/photo-1732811798242-6d31a6164660?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxyb2JvdCUyMGNhcnRvb258ZW58MHx8fHwxNzY1NTMzMzYyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1732811798242-6d31a6164660?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxyb2JvdCUyMGNhcnRvb258ZW58MHx8fHwxNzY1NTMzMzYyfDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "robot cartoon"
     },
     {
       "id": "avatar-robot-2",
       "description": "Robot avatar 2",
-      "imageUrl": "https://images.unsplash.com/flagged/photo-1563258574-f7dbe336d56b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxyb2JvdCUyMGNhcnRvb258ZW58MHx8fHwxNzY1NTMzMzYyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/flagged/photo-1563258574-f7dbe336d56b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxyb2JvdCUyMGNhcnRvb258ZW58MHx8fHwxNzY1NTMzMzYyfDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "robot cartoon"
     },
     {
       "id": "avatar-galaxy-1",
       "description": "Galaxy avatar 1",
-      "imageUrl": "https://images.unsplash.com/photo-1711560708511-36b48acad6bb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Z2FsYXh5JTIwc3BhY2V8ZW58MHx8fHwxNzY1NjEwOTkyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1711560708511-36b48acad6bb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Z2FsYXh5JTIwc3BhY2V8ZW58MHx8fHwxNzY1NjEwOTkyfDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "galaxy space"
     },
     {
       "id": "avatar-dragon-1",
       "description": "Dragon avatar 1",
-      "imageUrl": "https://images.unsplash.com/photo-1581023701827-b50cbca3cb18?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxkcmFnb24lMjBpbGx1c3RyYXRpb258ZW58MHx8fHwxNzY1NjMzMzc2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1581023701827-b50cbca3cb18?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxkcmFnb24lMjBpbGx1c3RyYXRpb258ZW58MHx8fHwxNzY1NjMzMzc2fDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "dragon illustration"
     },
     {
       "id": "avatar-wizard-1",
       "description": "Wizard avatar 1",
-      "imageUrl": "https://images.unsplash.com/photo-1743951896789-b0dd6318c9d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d2l6YXJkJTIwY2hhcmFjdGVyfGVufDB8fHx8MTc2NTUzNTUxM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1743951896789-b0dd6318c9d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8d2l6YXJkJTIwY2hhcmFjdGVyfGVufDB8fHx8MTc2NTUzNTUxM3ww&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "wizard character"
     },
     {
       "id": "avatar-ninja-1",
       "description": "Ninja avatar 1",
-      "imageUrl": "https://images.unsplash.com/photo-1689797714112-652680ad727e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxuaW5qYSUyMGNhcnRvb258ZW58MHx8fHwxNzY1NjMzMzc2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1689797714112-652680ad727e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxuaW5qYSUyMGNhcnRvb258ZW58MHx8fHwxNzY1NjMzMzc2fDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "ninja cartoon"
     },
     {
       "id": "service-1",
       "description": "Tutoring service",
-      "imageUrl": "https://images.unsplash.com/photo-1758525860435-502240649c59?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx0dXRvcmluZyUyMHNlc3Npb258ZW58MHx8fHwxNzY1NjIyNTUyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1758525860435-502240649c59?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx0dXRvcmluZyUyMHNlc3Npb258ZW58MHx8fHwxNzY1NjIyNTUyfDA&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "tutoring session"
     },
     {
       "id": "service-2",
       "description": "Graphic design service",
-      "imageUrl": "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxncmFwaGljJTIwZGVzaWdufGVufDB8fHx8MTc2NTUzNTU1NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxncmFwaGljJTIwZGVzaWdufGVufDB8fHx8MTc2NTUzNTU1NXww&ixlib-rb-4.1.0&q=80&w=1080",
       "imageHint": "graphic design"
     },
     {

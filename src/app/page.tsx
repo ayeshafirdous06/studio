@@ -1,7 +1,6 @@
 
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, UserPlus, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -9,7 +8,7 @@ import Image from 'next/image';
 import { placeholderImages } from '@/lib/placeholder-images';
 
 export default function AccountTypeSelectionPage() {
-  const heroImage = placeholderImages.find(p => p.id === 'college-registration');
+  const heroImage = placeholderImages.find(p => p.id === 'hero-charminar');
 
   return (
     <div className="relative flex min-h-screen flex-col">
