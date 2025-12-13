@@ -8,40 +8,29 @@
  *
  * @Core_Philosophy
  * The security model is primarily user-centric, enforcing strict ownership for all
- * personal data and user-generated content. A user has full control over their own
- * profile and associated subcollections (like service requests), but cannot access
- * the private data of other users. Publicly visible data, such as ratings, is
- * readable by all authenticated users but can only be modified by the original creator.
+ * user profiles. A user has full control over their own profile document. Publicly
+ * readable data, such as service requests, can be listed by any authenticated user
+ * but only created or modified by the owner.
  *
  * @Data_Structure
- * - /users/{userId}/...: A hierarchical structure where a user's private data, such
- *   as service requests and provider listings, are stored in subcollections.
- *   This path-based ownership makes security rules simple and performant.
- * - /colleges/{collegeId}: A top-level collection for college information, which is
- *   treated as read-only public data for signed-in users.
- * - /ratings/{ratingId}: A top-level collection for public ratings.
- * - /payments/{paymentId}: A top-level collection for transactions, with access
- *   restricted to the parties involved (payer and payee).
+ * - /users/{userId}: A top-level collection for user profiles. Each user owns their document.
+ * - /serviceRequests/{serviceRequestId}: A top-level collection for service requests,
+ *   allowing for easy public browsing. Ownership is maintained via a `studentId` field.
+ * - /colleges/{collegeId}: Read-only public data for signed-in users.
+ * - /ratings/{ratingId}, /payments/{paymentId}: Top-level collections for future features.
  *
  * @Key_Security_Decisions
  * - Default Deny: All paths are closed by default. Access is granted explicitly.
- * - No User Listing: To protect privacy, listing the entire /users collection is disallowed.
- * - Ownership Enforcement: All write operations on user-generated content require
- *   authentication and validation of ownership.
- * - Immutable Transactions: Payments are considered immutable once created to
- *   ensure financial integrity. Updates and deletes are disallowed.
- * - Relational Integrity: On document creation, key relational fields (e.g., `studentId`)
- *   are validated to match the user's auth ID and path, and are made immutable on update.
+ * - User Profile Security: Users can only create, read, and update their own profile document.
+ *   `request.auth.uid` must match the document's `userId`. Listing or reading other user
+ *   profiles is strictly disallowed to protect user privacy.
+ * - Service Requests: Any authenticated user can list all service requests.
+ *   Creation is restricted to the owner, and updates/deletes are owner-only.
  *
  * @Denormalization_for_Authorization
  * This ruleset relies on denormalized owner IDs (e.g., `studentId`, `raterId`, `payerId`)
- * directly on documents. This strategy avoids slow and costly `get()` calls to parent
- * documents for authorization, leading to simpler, faster, and more scalable rules.
- *
- * @Structural_Segregation
- * The data model effectively separates private, user-owned data (e.g., `/users/{userId}/serviceRequests`)
- * from globally accessible data (e.g., `/ratings`), ensuring that list operations
- * on public collections do not risk exposing private information.
+ * directly on documents. This strategy avoids slow and costly `get()` or `exists()`
+ * calls for authorization, leading to simpler, faster, and more scalable rules.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -66,14 +55,14 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
+    
     /**
-     * isExistingOwner
-     * @description Ensures the document exists and the user is the owner.
-     * Crucial for safe update and delete operations.
+     * isExistingDocOwner
+     * @description Ensures the document being modified exists and the user is the owner,
+     * based on a specified owner field in the document's data.
      */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+    function isExistingDocOwner(ownerField) {
+        return isSignedIn() && resource != null && request.auth.uid == resource.data[ownerField];
     }
 
     /**
@@ -86,31 +75,48 @@ service cloud.firestore {
     }
     
     /**
-     * isValidStudentCreation
+     * isNewUserDocValid
      * @description On user profile creation, validates that the document ID in the path
-     * matches the user's auth UID and the 'id' field within the document.
+     * matches the user's auth UID and the 'id' field within the new document.
      */
-    function isValidStudentCreation(userId) {
-      return isOwner(userId) && request.resource.data.id == userId;
+    function isNewUserDocValid(userId) {
+      let data = request.resource.data;
+      return isOwner(userId) 
+          && data.id == userId
+          && data.email == request.auth.token.email;
     }
 
     /**
-     * isValidOwnedDocCreation
-     * @description Validates that a new document in a user's subcollection
-     * correctly sets the 'studentId' to the owner's UID.
+     * isUserProfileUpdateValid
+     * @description On update, ensures key fields like ID, email, and account type
+     * cannot be changed, preserving integrity.
      */
-    function isValidOwnedDocCreation(userId) {
-      return isOwner(userId) && request.resource.data.studentId == userId;
+    function isUserProfileUpdateValid() {
+        let data = request.resource.data;
+        return data.id == resource.data.id
+            && data.email == resource.data.email
+            && data.accountType == resource.data.accountType;
+    }
+
+
+    /**
+     * isValidOwnedDocCreation
+     * @description Validates that a new document correctly sets the 'studentId'
+     * field to match the authenticated user's UID.
+     */
+    function isValidOwnedDocCreation() {
+      return isSignedIn() && request.resource.data.studentId == request.auth.uid;
     }
 
     /**
      * isOwnedDocDataImmutable
-     * @description On update, ensures the 'studentId' of a subcollection document
+     * @description On update, ensures the 'studentId' of a document
      * cannot be changed, preventing re-assignment of ownership.
      */
     function isOwnedDocDataImmutable() {
       return request.resource.data.studentId == resource.data.studentId;
     }
+
 
     /**
      * isValidRatingCreation
@@ -138,102 +144,66 @@ service cloud.firestore {
     //-------------------------------------------------------------------------
 
     /**
-     * @description Manages college profiles. This data is considered public
-     *              for any signed-in user to read, but is not writable by clients
-     *              to ensure data integrity.
+     * @description Manages college profiles. Public read for signed-in users,
+     *              but not client-writable.
      * @path /colleges/{collegeId}
-     * @allow (get) A signed-in user reads a college profile. `auth: {uid: 'user_abc'}`
-     * @deny (create) Any user attempts to create a new college profile.
-     * @principle Protects reference data by making it read-only for clients.
      */
     match /colleges/{collegeId} {
       allow get, list: if isSignedIn();
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow write: if false;
     }
 
     /**
-     * @description Secures student user profiles. A user can create, read, and
-     *              update their own profile, but cannot view others' profiles
-     *              or list all users in the system.
+     * @description Secures user profiles. A user can only read and write their OWN document.
      * @path /users/{userId}
-     * @allow (create) A new user signs up and creates their own profile. `auth: {uid: 'user_abc'}`
-     * @deny (get) User 'user_xyz' tries to read the profile of 'user_abc'.
-     * @deny (list) Any user tries to get a list of all users.
-     * @principle Enforces strict ownership of a user's root document.
+     * @allow (read, update) A user can access their own document.
+     * @allow (create) A new user creates their own profile.
+     * @deny (list, delete) Listing all users or deleting profiles is disallowed.
      */
     match /users/{userId} {
-      allow get, update: if isOwner(userId);
-      allow create: if isValidStudentCreation(userId);
-      allow list: if false;
-      allow delete: if false;
-      //Enforce immutability of student id on updates.
-      allow update: if request.resource.data.id == resource.data.id;
+      allow read, update: if isOwner(userId) && isUserProfileUpdateValid();
+      allow create: if isNewUserDocValid(userId);
+      allow delete, list: if false;
     }
 
     /**
-     * @description Manages service requests owned by a specific student. A student
-     *              has full CRUD (Create, Read, Update, Delete) permissions on their
-     *              own requests.
-     * @path /users/{userId}/serviceRequests/{serviceRequestId}
-     * @allow (create) User 'user_abc' creates a new service request for themselves.
-     * @deny (update) User 'user_xyz' tries to modify a service request owned by 'user_abc'.
-     * @principle Restricts access to a user's own data tree using path-based security.
+     * @description Manages service requests in a top-level collection.
+     * @path /serviceRequests/{serviceRequestId}
      */
-    match /users/{userId}/serviceRequests/{serviceRequestId} {
-      allow get, list, delete: if isOwner(userId);
-      allow create: if isValidOwnedDocCreation(userId);
-      allow update: if isOwner(userId) && isOwnedDocDataImmutable();
+    match /serviceRequests/{serviceRequestId} {
+        // Any authenticated user can read any single service request.
+        allow get: if isSignedIn();
+        // A user can only create a service request for themselves.
+        allow create: if isValidOwnedDocCreation();
+        // The user who created the request can update or delete it.
+        allow update: if isExistingDocOwner('studentId') && isOwnedDocDataImmutable();
+        allow delete: if isExistingDocOwner('studentId');
+        
+        // This rule is on the COLLECTION, not the document.
+        // It allows any signed-in user to query the collection.
+        allow list: if isSignedIn();
     }
 
-    /**
-     * @description Manages service provider listings owned by a student. A student
-     *              has full CRUD permissions on their own listings.
-     * @path /users/{userId}/serviceProviderListings/{serviceProviderListingId}
-     * @allow (list) User 'user_abc' lists all of their own service provider listings.
-     * @deny (delete) User 'user_xyz' tries to delete a listing owned by 'user_abc'.
-     * @principle Restricts access to a user's own data tree using path-based security.
-     */
-    match /users/{userId}/serviceProviderListings/{serviceProviderListingId} {
-      allow get, list, delete: if isOwner(userId);
-      allow create: if isValidOwnedDocCreation(userId);
-      allow update: if isOwner(userId) && isOwnedDocDataImmutable();
-    }
 
     /**
-     * @description Stores payment transactions. Only the involved parties (payer or
-     *              payee) can read a payment. To ensure integrity, only the payer
-     *              can create it, and payments are immutable (cannot be updated or deleted).
+     * @description Stores payment transactions.
      * @path /payments/{paymentId}
-     * @allow (get) Payer 'user_abc' or Payee 'user_xyz' reads their transaction.
-     * @deny (list) Any user tries to list all payments in the system.
-     * @deny (update) The payer tries to change the amount after creation.
-     * @principle Restricts access based on role fields (`payerId`, `payeeId`) within the document.
      */
     match /payments/{paymentId} {
       allow get: if isPaymentParticipant();
       allow create: if isSignedIn() && request.resource.data.payerId == request.auth.uid;
-      allow list: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow list, update, delete: if false;
     }
 
     /**
-     * @description Manages public ratings. Any authenticated user can read ratings.
-     *              A user can create a rating for another user, and can update or
-     *              delete their own previously submitted ratings.
+     * @description Manages public ratings.
      * @path /ratings/{ratingId}
-     * @allow (create) User 'user_abc' creates a rating for 'user_xyz'.
-     * @deny (create) User 'user_abc' tries to create a rating for themselves.
-     * @deny (delete) User 'user_xyz' tries to delete a rating left by 'user_abc'.
-     * @principle Implements public-read with owner-only writes, using a denormalized `raterId` field.
      */
     match /ratings/{ratingId} {
       allow get, list: if true;
       allow create: if isValidRatingCreation();
-      allow update: if isExistingOwner(resource.data.raterId) && isRatingDataImmutable();
-      allow delete: if isExistingOwner(resource.data.raterId);
+      allow update: if isExistingDocOwner('raterId') && isRatingDataImmutable();
+      allow delete: if isExistingDocOwner('raterId');
     }
   }
 }

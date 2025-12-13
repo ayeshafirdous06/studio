@@ -19,8 +19,9 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { ServiceRequestForm } from '@/app/services/new/page';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/firebase';
+import { useAuth, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 
 type StoredRequest = ServiceRequestForm & { id: string; status: string; };
 
@@ -35,21 +36,31 @@ type UserProfile = {
   earnings: number;
   accountType: 'provider' | 'seeker';
   skills?: string[];
+  tagline?: string;
 };
 
 export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
     const auth = useAuth();
+    const { user, isUserLoading } = useUser();
+    const firestore = useFirestore();
+
+    // Fetch the current user's profile from Firestore directly
+    const userDocRef = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [firestore, user]);
+
+    const { data: currentUser, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
     
-    const [currentUser, setCurrentUser] = useLocalStorage<UserProfile | null>('userProfile', null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [localProfile, setLocalProfile] = useLocalStorage<UserProfile | null>('userProfile', null);
 
     const userCollege = currentUser ? colleges.find(c => c.id === currentUser.collegeId) : null;
     
     const [isEditing, setIsEditing] = useState(false);
     const [profileSummary, setProfileSummary] = useState("I'm a third-year design student specializing in branding and digital illustration. I have experience with Adobe Creative Suite and have completed several freelance logo design projects. I'm passionate about creating visually compelling identities for clubs and student startups.");
-    const [skills, setSkills] = useState<string[]>(['Graphic Design', 'Logo Design', 'Adobe Illustrator', 'Branding', 'UI/UX']);
+    const [skills, setSkills] = useState<string[]>([]);
     const [isAiLoading, setIsAiLoading] = useState(false);
     
     const [myRequests, setMyRequests] = useLocalStorage<(StoredRequest & { title: string })[]>('my-requests', []);
@@ -57,43 +68,17 @@ export default function ProfilePage() {
     const isProvider = currentUser?.accountType === 'provider';
     
     useEffect(() => {
-        // Set skills from profile when it loads
-        if (currentUser?.skills) {
-            setSkills(currentUser.skills);
+        if (currentUser) {
+            setSkills(currentUser.skills || []);
+            setProfileSummary(currentUser.tagline || profileSummary);
+            // Sync firestore profile to local storage for other components
+            if (JSON.stringify(currentUser) !== JSON.stringify(localProfile)) {
+                setLocalProfile(currentUser);
+            }
         }
-    }, [currentUser?.skills])
+    }, [currentUser, localProfile, setLocalProfile, profileSummary]);
 
 
-    useEffect(() => {
-        // We need to check if the userProfile exists and is not an empty object
-        if (currentUser && currentUser.id) {
-            setIsLoading(false);
-        } else {
-            // If no profile from useLocalStorage, wait a bit to see if it loads from async storage,
-            // then redirect if it's still missing. This handles race conditions on initial load.
-            const timer = setTimeout(() => {
-                const storedProfileString = localStorage.getItem('userProfile');
-                if (storedProfileString) {
-                  try {
-                    const storedProfile = JSON.parse(storedProfileString);
-                     if (!storedProfile || Object.keys(storedProfile).length === 0) {
-                       setIsLoading(false);
-                    } else {
-                       setCurrentUser(storedProfile);
-                       setIsLoading(false);
-                    }
-                  } catch (e) {
-                     console.error("Failed to parse userProfile from localStorage", e);
-                     setIsLoading(false);
-                  }
-                } else {
-                    setIsLoading(false);
-                }
-            }, 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [currentUser, router, setCurrentUser]);
-    
     const handleLogout = async () => {
         try {
             await signOut(auth);
@@ -151,8 +136,8 @@ export default function ProfilePage() {
     };
 
     const handleSaveChanges = () => {
-        if (currentUser) {
-            setCurrentUser({ ...currentUser, skills: skills });
+        if (currentUser && userDocRef) {
+            // updateDocumentNonBlocking(userDocRef, { skills: skills, tagline: profileSummary });
         }
         setIsEditing(false);
         toast({
@@ -161,7 +146,7 @@ export default function ProfilePage() {
         });
     }
 
-    if (isLoading) {
+    if (isUserLoading || isProfileLoading) {
         return (
              <>
                 <SiteHeader />
@@ -236,7 +221,7 @@ export default function ProfilePage() {
                                     </div>
                                     <div className="mx-4 h-6 w-px bg-border" />
                                     <div className="flex items-center">
-                                        <span className="font-bold text-lg mr-1">₹</span>
+                                        <DollarSign className="h-5 w-5 text-green-500" />
                                         <span className="font-bold">{currentUser.earnings.toFixed(2)}</span>
                                         <span className="text-muted-foreground ml-1">Total Earnings</span>
                                     </div>
@@ -323,7 +308,7 @@ export default function ProfilePage() {
                                 {isEditing ? (
                                     <div className="space-y-4">
                                         <div>
-                                            <Label htmlFor="summary">Profile Summary</Label>
+                                            <Label htmlFor="summary">Profile Summary (Tagline)</Label>
                                             <Textarea 
                                                 id="summary" 
                                                 value={profileSummary} 
