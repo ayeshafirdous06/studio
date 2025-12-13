@@ -11,6 +11,7 @@ import { Search, Send } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { placeholderImages } from '@/lib/placeholder-images';
 import { users } from '@/lib/data';
+import { cn } from '@/lib/utils';
 
 // Mock data for chat conversations
 const conversations = [
@@ -37,18 +38,31 @@ const conversations = [
   },
 ];
 
-const initialMessages = [
-  { id: 'msg-1', senderId: '1', text: 'Hey! I saw your request for Calculus tutoring.', isCurrentUser: false },
-  { id: 'msg-2', senderId: 'current_user', text: 'Hi! Yes, I\'m struggling a bit with integration.', isCurrentUser: true },
-  { id: 'msg-3', senderId: '1', text: 'Sure, I can help with that!', isCurrentUser: false },
-]
+const allMessages: Record<string, { id: string; senderId: string; text: string; isCurrentUser: boolean }[]> = {
+    'convo-1': [
+      { id: 'msg-1', senderId: '1', text: 'Hey! I saw your request for Calculus tutoring.', isCurrentUser: false },
+      { id: 'msg-2', senderId: 'current_user', text: 'Hi! Yes, I\'m struggling a bit with integration.', isCurrentUser: true },
+      { id: 'msg-3', senderId: '1', text: 'Sure, I can help with that!', isCurrentUser: false },
+    ],
+    'convo-2': [
+      { id: 'msg-4', senderId: '2', text: 'The logo looks good!', isCurrentUser: false },
+      { id: 'msg-5', senderId: 'current_user', text: 'Thanks! Let me know if you need any revisions.', isCurrentUser: true },
+       { id: 'msg-6', senderId: '2', text: 'Project is looking great. One more change...', isCurrentUser: false },
+    ],
+    'convo-3': [
+      { id: 'msg-7', senderId: '3', text: 'Can you help me with my graduation photoshoot?', isCurrentUser: false },
+       { id: 'msg-8', senderId: '3', text: 'What time works for you tomorrow?', isCurrentUser: false },
+    ],
+}
+
 
 export default function MessagesPage() {
-  const activeChatConvo = conversations[0];
-  const activeChatUser = users.find(u => u.id === activeChatConvo.userId);
+  const [activeChatId, setActiveChatId] = useState(conversations[0].id);
+  const activeChatConvo = conversations.find(c => c.id === activeChatId);
+  const activeChatUser = activeChatConvo ? users.find(u => u.id === activeChatConvo.userId) : null;
   const activeChatAvatar = activeChatUser ? placeholderImages.find(p => p.id === activeChatUser.avatarId) : null;
   
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState(allMessages[activeChatId]);
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   
@@ -66,6 +80,10 @@ export default function MessagesPage() {
     setMessages([...messages, message]);
     setNewMessage('');
   };
+
+  useEffect(() => {
+    setMessages(allMessages[activeChatId] || []);
+  }, [activeChatId]);
 
   useEffect(() => {
     // Scroll to the bottom when messages change
@@ -98,7 +116,14 @@ export default function MessagesPage() {
                 if (!user) return null;
                 const avatar = placeholderImages.find(p => p.id === user.avatarId);
                 return (
-                  <div key={convo.id} className="flex items-center p-2 rounded-lg cursor-pointer hover:bg-muted bg-card">
+                  <div 
+                    key={convo.id} 
+                    className={cn(
+                        "flex items-center p-2 rounded-lg cursor-pointer hover:bg-muted",
+                        convo.id === activeChatId ? "bg-muted" : "bg-card"
+                    )}
+                    onClick={() => setActiveChatId(convo.id)}
+                  >
                     <Avatar className="h-10 w-10 mr-3">
                       {avatar && <AvatarImage src={avatar.imageUrl} alt={user.name} />}
                       <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
