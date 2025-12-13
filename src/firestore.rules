@@ -23,8 +23,7 @@
  * - Default Deny: All paths are closed by default. Access is granted explicitly.
  * - User Profile Security: Users can only create a profile for themselves (`create`) and
  *   can only modify their own profile (`update`). Reading other user profiles is public for all
- *   authenticated users to allow for browsing providers. Listing all users is disabled to
-p *   prevent data scraping.
+ *   authenticated users to allow for browsing providers. Listing all users is allowed for signed-in users.
  * - Service Requests: Any authenticated user can list all service requests.
  *   Creation is restricted to the owner, and updates/deletes are owner-only.
  *
