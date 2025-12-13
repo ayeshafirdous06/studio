@@ -31,7 +31,7 @@ import {
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   username: z.string().min(3, 'Username must be at least 3 characters.').regex(/^[a-z0-9_.]+$/, 'Username can only contain lowercase letters, numbers, underscores, and dots.'),
-  avatarUrl: z.string().optional(), // Avatar is now optional from a predefined list
+  avatarUrl: z.string().optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -48,6 +48,7 @@ export default function CreateProfilePage() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
+  const [isGoogleSignIn, setIsGoogleSignIn] = useState(false);
 
 
   const {
@@ -75,6 +76,10 @@ export default function CreateProfilePage() {
       }
       if (data.username) {
         setValue('username', data.username);
+      }
+      // A simple check to see if it was a Google sign-in
+      if (data.uid) {
+        setIsGoogleSignIn(true);
       }
     } catch (e) {
       console.error("Could not parse signup data from local storage");
@@ -136,9 +141,10 @@ export default function CreateProfilePage() {
             const fullProfile = { 
               ...signupData, 
               ...data, 
-              id: signupData?.uid || 'user-1', 
+              id: signupData?.uid || signupData?.email || 'user-1', 
               rating: 4.8, 
               earnings: 1250.00,
+              // Provide a fallback Dicebear avatar if no image is uploaded
               avatarUrl: data.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${data.name}`
             }; 
             setUserProfile(fullProfile);
@@ -193,7 +199,7 @@ export default function CreateProfilePage() {
 
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="e.g., Jane Doe" {...register('name')} />
+                <Input id="name" placeholder="e.g., Jane Doe" {...register('name')} disabled={isGoogleSignIn} />
                 {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
               </div>
 
@@ -241,3 +247,5 @@ export default function CreateProfilePage() {
     </>
   );
 }
+
+    

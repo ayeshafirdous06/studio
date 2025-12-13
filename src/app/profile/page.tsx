@@ -18,6 +18,7 @@ import { BackButton } from '@/components/common/back-button';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { ServiceRequestForm } from '@/app/services/new/page';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from 'next/navigation';
 
 type StoredRequest = ServiceRequestForm & { id: string; status: string; };
 
@@ -35,6 +36,7 @@ type UserProfile = {
 
 export default function ProfilePage() {
     const { toast } = useToast();
+    const router = useRouter();
     
     const [currentUser, setCurrentUser] = useLocalStorage<UserProfile | null>('userProfile', null);
     const [isLoading, setIsLoading] = useState(true);
@@ -51,14 +53,23 @@ export default function ProfilePage() {
     const isProvider = currentUser?.accountType === 'provider';
 
     useEffect(() => {
-        // Simulate loading user data
-        if (currentUser) {
+        // We need to check if the userProfile exists and is not an empty object
+        if (currentUser && currentUser.id) {
             setIsLoading(false);
         } else {
-            // Handle case where profile is not found, maybe redirect
-            setTimeout(() => setIsLoading(false), 1000);
+            // If no profile, wait a bit to see if it loads, then redirect if it's still missing.
+            const timer = setTimeout(() => {
+                const storedProfile = localStorage.getItem('userProfile');
+                if (!storedProfile || Object.keys(JSON.parse(storedProfile)).length === 0) {
+                   // This may happen if the user lands here without creating a profile
+                   // Redirecting to a safe page like dashboard or login might be a good idea.
+                   // For now, we'll just stop loading and show an error message.
+                   setIsLoading(false); 
+                }
+            }, 1500);
+            return () => clearTimeout(timer);
         }
-    }, [currentUser]);
+    }, [currentUser, router]);
 
     const handleGetRecommendations = async () => {
         if (!profileSummary) {
@@ -136,12 +147,20 @@ export default function ProfilePage() {
         )
     }
 
-    if (!currentUser) {
+    if (!currentUser || !currentUser.id) {
         return (
             <>
                 <SiteHeader />
                 <div className="container py-8 text-center">
-                    <p>Could not load user profile. Please try again.</p>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Profile Not Found</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p>Could not load user profile. Please try signing in again.</p>
+                            <Button onClick={() => router.push('/login')} className="mt-4">Go to Login</Button>
+                        </CardContent>
+                    </Card>
                 </div>
             </>
         )
@@ -161,7 +180,7 @@ export default function ProfilePage() {
                         </Avatar>
                         <div className="flex-1 text-center md:text-left">
                             <h1 className="text-3xl font-bold font-headline">{currentUser.name}</h1>
-                            <p className="text-muted-foreground">@{currentUser.username} &middot; Student at {userCollege?.name}</p>
+                            <p className="text-muted-foreground">@{currentUser.username} &middot; Student at {userCollege?.name || 'their college'}</p>
                             {isProvider && (
                                 <div className="flex items-center justify-center md:justify-start mt-2">
                                     <div className="flex items-center">
