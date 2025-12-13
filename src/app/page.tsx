@@ -1,3 +1,6 @@
+
+'use client';
+
 import { SiteHeader } from "@/components/common/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,8 +8,12 @@ import { CheckCircle, DollarSign, PenSquare, Users } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { placeholderImages } from "@/lib/placeholder-images";
+import { preloadColleges } from "@/lib/college-initializer";
+import { useToast } from "@/hooks/use-toast";
+
 
 export default function Home() {
+  const { toast } = useToast();
   const features = [
     {
       icon: <PenSquare className="h-8 w-8 text-primary" />,
@@ -31,6 +38,27 @@ export default function Home() {
   ];
 
   const heroImage = placeholderImages.find(p => p.id === 'hero-students-collaborating');
+
+  const handlePreload = async () => {
+    try {
+      const result = await preloadColleges();
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.message,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Preload Failed",
+        description: error.message || "An unexpected error occurred.",
+      });
+    }
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -115,6 +143,14 @@ export default function Home() {
             </div>
           </div>
         </section>
+        
+        {/* Temporary Preload Button */}
+        <div className="container py-4 text-center">
+            <p className="text-sm text-muted-foreground mb-2">Dev only: Click to seed database</p>
+            <Button onClick={handlePreload} variant="outline" size="sm">
+                Preload College Data
+            </Button>
+        </div>
       </main>
       
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
