@@ -14,7 +14,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { serviceRequests, serviceProviders } from "@/lib/data";
 import { placeholderImages } from "@/lib/placeholder-images";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 
 
 type UserProfile = {
@@ -66,103 +66,103 @@ export default function DashboardPage() {
                 </div>
             </div>
             
-             <Tabs defaultValue="providers">
-                <TabsList>
-                    <TabsTrigger value="providers">Service Providers</TabsTrigger>
-                    <TabsTrigger value="bids">Open for Bids</TabsTrigger>
-                </TabsList>
-                <TabsContent value="providers" className="mt-4">
-                    <div className="relative mb-6">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                            placeholder="Search providers by name or username..." 
-                            className="pl-8"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                    <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
-                         {filteredProviders.map(provider => {
-                            const providerAvatar = placeholderImages.find(p => p.id === provider.avatarId);
-                            return (
-                                <Card key={provider.id}>
-                                    <CardHeader className="flex flex-col items-center text-center">
-                                        <CardTitle className="text-2xl">{provider.name}</CardTitle>
-                                        <p className="text-sm text-muted-foreground">@{provider.username}</p>
-                                        <Avatar className="h-24 w-24 my-4">
-                                            {providerAvatar && <AvatarImage src={providerAvatar.imageUrl} alt={provider.name} />}
-                                            <AvatarFallback className="text-3xl">{provider.name.charAt(0)}</AvatarFallback>
+            <div>
+                <h2 className="text-2xl font-semibold mb-4">Service Providers</h2>
+                <div className="relative mb-6">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search providers by name or username..." 
+                        className="pl-8"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
+                     {filteredProviders.map(provider => {
+                        const providerAvatar = placeholderImages.find(p => p.id === provider.avatarId);
+                        return (
+                            <Card key={provider.id}>
+                                <CardHeader className="flex flex-col items-center text-center">
+                                    <CardTitle className="text-2xl">{provider.name}</CardTitle>
+                                    <p className="text-sm text-muted-foreground">@{provider.username}</p>
+                                    <Avatar className="h-24 w-24 my-4">
+                                        {providerAvatar && <AvatarImage src={providerAvatar.imageUrl} alt={provider.name} />}
+                                        <AvatarFallback className="text-3xl">{provider.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                </CardHeader>
+                                <CardContent className="text-center">
+                                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2 h-10">{provider.tagline}</p>
+                                    <div className="flex flex-wrap gap-2 justify-center mb-4 min-h-[52px]">
+                                        {provider.skills.slice(0, 3).map((skill:string) => (
+                                            <Badge key={skill} variant="secondary">{skill}</Badge>
+                                        ))}
+                                    </div>
+                                     <div className="flex items-center justify-center">
+                                        <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-1" />
+                                        <span className="font-bold">{provider.rating.toFixed(1)}</span>
+                                        <span className="text-muted-foreground ml-1">({provider.reviews} reviews)</span>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button className="w-full">View Profile</Button>
+                                </CardFooter>
+                            </Card>
+                        )
+                    })}
+                </div>
+            </div>
+
+            <Separator className="my-12" />
+
+            <div>
+                 <h2 className="text-2xl font-semibold mb-4">Open for Bids</h2>
+                 <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
+                    {serviceRequests.map(request => {
+                        const requestor = serviceProviders.find(p => p.id === request.studentId);
+                         const requestorAvatar = requestor ? placeholderImages.find(p => p.id === requestor.avatarId) : null;
+                        
+                        return (
+                            <Card key={request.id}>
+                                <CardHeader>
+                                    <CardTitle className="line-clamp-2">{request.title}</CardTitle>
+                                    <CardDescription className="flex items-center gap-2 pt-2">
+                                        <Avatar className="h-6 w-6">
+                                            {requestorAvatar && <AvatarImage src={requestorAvatar.imageUrl} alt={requestor?.name} />}
+                                            <AvatarFallback>{requestor?.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                    </CardHeader>
-                                    <CardContent className="text-center">
-                                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 h-10">{provider.tagline}</p>
-                                        <div className="flex flex-wrap gap-2 justify-center mb-4 min-h-[52px]">
-                                            {provider.skills.slice(0, 3).map((skill:string) => (
-                                                <Badge key={skill} variant="secondary">{skill}</Badge>
-                                            ))}
+                                        <span>{requestor?.name}</span>
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3 h-[60px]">{request.description}</p>
+                                     <div className="flex flex-wrap gap-1 mb-4">
+                                        {request.skills.map(skill => (
+                                            <Badge key={skill} variant="outline">{skill}</Badge>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                        <div className="font-bold text-lg text-foreground">₹{request.budget}</div>
+                                        <div className="flex items-center">
+                                            <Clock className="mr-1 h-4 w-4" />
+                                            <span>{formatDistanceToNow(new Date(request.deadline), { addSuffix: true })}</span>
                                         </div>
-                                         <div className="flex items-center justify-center">
-                                            <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-1" />
-                                            <span className="font-bold">{provider.rating.toFixed(1)}</span>
-                                            <span className="text-muted-foreground ml-1">({provider.reviews} reviews)</span>
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter>
-                                        <Button className="w-full">View Profile</Button>
-                                    </CardFooter>
-                                </Card>
-                            )
-                        })}
-                    </div>
-                </TabsContent>
-                <TabsContent value="bids" className="mt-4">
-                    <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
-                        {serviceRequests.map(request => {
-                            const requestor = serviceProviders.find(p => p.id === request.studentId);
-                             const requestorAvatar = requestor ? placeholderImages.find(p => p.id === requestor.avatarId) : null;
-                            
-                            return (
-                                <Card key={request.id}>
-                                    <CardHeader>
-                                        <CardTitle className="line-clamp-2">{request.title}</CardTitle>
-                                        <CardDescription className="flex items-center gap-2 pt-2">
-                                            <Avatar className="h-6 w-6">
-                                                {requestorAvatar && <AvatarImage src={requestorAvatar.imageUrl} alt={requestor?.name} />}
-                                                <AvatarFallback>{requestor?.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <span>{requestor?.name}</span>
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3 h-[60px]">{request.description}</p>
-                                         <div className="flex flex-wrap gap-1 mb-4">
-                                            {request.skills.map(skill => (
-                                                <Badge key={skill} variant="outline">{skill}</Badge>
-                                            ))}
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                            <div className="font-bold text-lg text-foreground">₹{request.budget}</div>
-                                            <div className="flex items-center">
-                                                <Clock className="mr-1 h-4 w-4" />
-                                                <span>{formatDistanceToNow(new Date(request.deadline), { addSuffix: true })}</span>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter>
-                                        {currentUser?.id === request.studentId ? (
-                                             <Button className="w-full" variant="secondary">Manage</Button>
-                                        ) : isProvider ? (
-                                            <Button className="w-full">Place Bid</Button>
-                                        ) : (
-                                            <Button className="w-full" disabled>Sign up as Provider to Bid</Button>
-                                        )}
-                                    </CardFooter>
-                                </Card>
-                            )
-                        })}
-                    </div>
-                </TabsContent>
-            </Tabs>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    {currentUser?.id === request.studentId ? (
+                                         <Button className="w-full" variant="secondary">Manage</Button>
+                                    ) : isProvider ? (
+                                        <Button className="w-full">Place Bid</Button>
+                                    ) : (
+                                        <Button className="w-full" disabled>Sign up as Provider to Bid</Button>
+                                    )}
+                                </CardFooter>
+                            </Card>
+                        )
+                    })}
+                </div>
+            </div>
+
         </div>
     );
 }
