@@ -102,9 +102,9 @@ export const colleges = [
   
 
 export const users = [
-  { id: '1', name: 'Alice Johnson', collegeId: 'cbit', rating: 4.8, earnings: 1250.00, avatarId: 'avatar-1' },
-  { id: '2', name: 'Bob Williams', collegeId: 'cbit', rating: 4.5, earnings: 800.00, avatarId: 'avatar-2' },
-  { id: '3', name: 'Charlie Brown', collegeId: 'osmania', rating: 4.9, earnings: 2100.00, avatarId: 'avatar-3' },
+  { id: '1', name: 'Mohammed Sufyan Ali', collegeId: 'cbit', rating: 4.8, earnings: 1250.00, avatarId: 'avatar-1' },
+  { id: '2', name: 'Shahed Ali', collegeId: 'cbit', rating: 4.5, earnings: 800.00, avatarId: 'avatar-2' },
+  { id: '3', name: 'Ayesha Firdous', collegeId: 'osmania', rating: 4.9, earnings: 2100.00, avatarId: 'avatar-3' },
   { id: '4', name: 'Diana Miller', collegeId: 'nizam', rating: 4.7, earnings: 550.00, avatarId: 'avatar-4' },
 ];
 

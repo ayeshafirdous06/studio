@@ -14,7 +14,7 @@ import { placeholderImages } from '@/lib/placeholder-images';
 const conversations = [
   {
     id: 'convo-1',
-    userName: 'Alice Johnson',
+    userName: 'Mohammed Sufyan Ali',
     avatarId: 'avatar-1',
     lastMessage: 'Sure, I can help with that!',
     timestamp: '10:40 AM',
@@ -22,7 +22,7 @@ const conversations = [
   },
   {
     id: 'convo-2',
-    userName: 'Bob Williams',
+    userName: 'Shahed Ali',
     avatarId: 'avatar-2',
     lastMessage: 'Project is looking great. One more change...',
     timestamp: '9:15 AM',
@@ -30,7 +30,7 @@ const conversations = [
   },
    {
     id: 'convo-3',
-    userName: 'Charlie Brown',
+    userName: 'Ayesha Firdous',
     avatarId: 'avatar-3',
     lastMessage: 'What time works for you tomorrow?',
     timestamp: 'Yesterday',
@@ -39,9 +39,9 @@ const conversations = [
 ];
 
 const messages = [
-  { id: 'msg-1', sender: 'Alice', text: 'Hey! I saw your request for Calculus tutoring.', isCurrentUser: false },
-  { id: 'msg-2', sender: 'You', text: 'Hi Alice! Yes, I\'m struggling a bit with integration.', isCurrentUser: true },
-  { id: 'msg-3', sender: 'Alice', text: 'Sure, I can help with that!', isCurrentUser: false },
+  { id: 'msg-1', sender: 'Mohammed Sufyan Ali', text: 'Hey! I saw your request for Calculus tutoring.', isCurrentUser: false },
+  { id: 'msg-2', sender: 'You', text: 'Hi! Yes, I\'m struggling a bit with integration.', isCurrentUser: true },
+  { id: 'msg-3', sender: 'Mohammed Sufyan Ali', text: 'Sure, I can help with that!', isCurrentUser: false },
 ]
 
 export default function MessagesPage() {
@@ -95,11 +95,11 @@ export default function MessagesPage() {
             <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
                 <div className="flex items-center space-x-4">
                     <Avatar>
-                        <AvatarImage src={placeholderImages.find(p => p.id === 'avatar-1')?.imageUrl} alt="Alice Johnson" />
-                        <AvatarFallback>AJ</AvatarFallback>
+                        <AvatarImage src={placeholderImages.find(p => p.id === 'avatar-1')?.imageUrl} alt="Mohammed Sufyan Ali" />
+                        <AvatarFallback>MS</AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="text-sm font-medium leading-none">Alice Johnson</p>
+                        <p className="text-sm font-medium leading-none">Mohammed Sufyan Ali</p>
                         <p className="text-sm text-muted-foreground">Online</p>
                     </div>
                 </div>
@@ -111,7 +111,7 @@ export default function MessagesPage() {
                         {!msg.isCurrentUser && (
                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={placeholderImages.find(p => p.id === 'avatar-1')?.imageUrl} />
-                                <AvatarFallback>AJ</AvatarFallback>
+                                <AvatarFallback>MS</AvatarFallback>
                             </Avatar>
                         )}
                         <div className={`rounded-lg px-4 py-2 max-w-[70%] ${msg.isCurrentUser ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
