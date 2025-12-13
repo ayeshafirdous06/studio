@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { BackButton } from '@/components/common/back-button';
 
 const serviceRequestSchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters.'),
@@ -92,6 +93,7 @@ export default function NewServiceRequestPage() {
     <>
       <SiteHeader />
       <div className="container max-w-2xl py-8">
+        <BackButton />
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl font-headline">Post a New Service Request</CardTitle>

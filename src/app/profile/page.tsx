@@ -14,6 +14,7 @@ import { recommendSkillsForProvider } from '@/ai/flows/skill-recommendation-for-
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { BackButton } from '@/components/common/back-button';
 
 // Mock current user
 const currentUser = users[0];
@@ -63,6 +64,7 @@ export default function ProfilePage() {
         <>
             <SiteHeader />
             <div className="container py-8">
+                <BackButton />
                 <Card className="mb-8">
                     <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
                         <Avatar className="h-24 w-24 md:h-32 md:w-32 border">
