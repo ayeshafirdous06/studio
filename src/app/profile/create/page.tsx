@@ -30,6 +30,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { colleges } from '@/lib/data';
 import { Textarea } from '@/components/ui/textarea';
+import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -37,6 +39,7 @@ const profileSchema = z.object({
   avatarUrl: z.string().optional(),
   collegeId: z.string({ required_error: "Please select your college." }).min(1, "Please select your college."),
   skills: z.string().optional(), // For providers
+  tagline: z.string().optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -44,6 +47,8 @@ type ProfileForm = z.infer<typeof profileSchema>;
 export default function CreateProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userProfile, setUserProfile] = useLocalStorage('userProfile', {});
   const [signupData, setSignupData] = useState<any>(null);
@@ -74,6 +79,7 @@ export default function CreateProfilePage() {
       username: '',
       avatarUrl: '',
       skills: '',
+      tagline: '',
     }
   });
   
@@ -91,7 +97,7 @@ export default function CreateProfilePage() {
         setValue('collegeId', data.collegeId);
       }
       // A simple check to see if it was a Google sign-in
-      if (data.uid) {
+      if (data.isGoogleSignIn) {
         setIsGoogleSignIn(true);
       }
     } catch (e) {
@@ -147,37 +153,69 @@ export default function CreateProfilePage() {
 
 
   const onSubmit = async (data: ProfileForm) => {
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Error',
+            description: 'You must be logged in to create a profile.',
+        });
+        return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
-        try {
-            const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
-            const fullProfile = { 
-              ...signupData, 
-              ...data,
-              skills: skillsArray, 
-              id: signupData?.uid || signupData?.email || 'user-1', 
-              rating: 4.8, 
-              earnings: 1250.00,
-              accountType: signupData?.accountType || 'seeker',
-              avatarUrl: data.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${data.name}`
-            }; 
-            setUserProfile(fullProfile);
+    try {
+        const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const fullProfile = { 
+          id: user.uid,
+          email: user.email,
+          name: data.name,
+          username: data.username,
+          collegeId: data.collegeId,
+          avatarUrl: data.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${data.name}`,
+          accountType: signupData?.accountType || 'seeker',
+          // Provider specific fields
+          skills: skillsArray, 
+          tagline: data.tagline,
+          rating: isProvider ? 4.5 + Math.random() * 0.5 : 0, // Mock rating for new providers
+          earnings: 0,
+        }; 
 
-            localStorage.removeItem('signupData');
-        } catch (e) {
-            console.error("Local storage is unavailable.");
-        }
+        // Save to local storage for immediate access
+        setUserProfile(fullProfile);
+
+        // Save to Firestore
+        const userDocRef = doc(firestore, 'users', user.uid);
+        setDocumentNonBlocking(userDocRef, fullProfile, { merge: true });
+
+        // Clean up temporary data
+        localStorage.removeItem('signupData');
 
         toast({
             title: 'Profile Created!',
             description: 'Your profile has been successfully created.',
         });
         router.push('/dashboard');
-        setIsSubmitting(false);
 
-    }, 1000);
+    } catch (error) {
+        console.error("Profile creation error:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not save your profile. Please try again.',
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
+
+  if (isUserLoading) {
+    return (
+        <div className="flex h-screen items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
 
   return (
     <>
@@ -256,6 +294,15 @@ export default function CreateProfilePage() {
               </div>
               
               {isProvider && (
+                <>
+                <div className="space-y-2">
+                  <Label htmlFor="tagline">Profile Tagline</Label>
+                  <Input
+                    id="tagline"
+                    placeholder="e.g., Full-Stack Developer & CS Tutor"
+                    {...register('tagline')}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="skills">Your Skills</Label>
                   <Textarea
@@ -268,10 +315,11 @@ export default function CreateProfilePage() {
                   </p>
                   {errors.skills && <p className="text-sm text-destructive">{errors.skills.message}</p>}
                 </div>
+                </>
               )}
 
 
-              <Button type="submit" disabled={isSubmitting} className="w-full">
+              <Button type="submit" disabled={isSubmitting || isUserLoading} className="w-full">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save and Continue'}
               </Button>
             </form>

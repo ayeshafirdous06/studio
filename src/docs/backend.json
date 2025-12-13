@@ -1,0 +1,310 @@
+{
+  "entities": {
+    "College": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "College",
+      "type": "object",
+      "description": "Represents a college or university registered within the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the college entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The official name of the college."
+        },
+        "registrationDate": {
+          "type": "string",
+          "description": "The date when the college was registered in the application.",
+          "format": "date-time"
+        },
+        "subscriptionFee": {
+          "type": "number",
+          "description": "The subscription fee amount for the college to use the application."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "registrationDate",
+        "subscriptionFee"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application, who can be a service seeker or provider.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user (matches Firebase Auth UID)."
+        },
+        "collegeId": {
+          "type": "string",
+          "description": "Reference to College."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "username": {
+            "type": "string",
+            "description": "The user's unique username."
+        },
+        "avatarUrl": {
+            "type": "string",
+            "description": "URL for the user's profile picture."
+        },
+        "accountType": {
+            "type": "string",
+            "description": "The type of account, either 'seeker' or 'provider'.",
+            "enum": ["seeker", "provider"]
+        },
+        "skills": {
+          "type": "array",
+          "description": "A list of skills offered by the service provider.",
+          "items": { "type": "string" }
+        },
+        "tagline": {
+            "type": "string",
+            "description": "A short, descriptive tagline for a service provider."
+        },
+        "rating": {
+            "type": "number",
+            "description": "The user's average rating as a provider."
+        },
+        "earnings": {
+            "type": "number",
+            "description": "Total earnings for a service provider."
+        }
+      },
+      "required": [
+        "id",
+        "collegeId",
+        "email",
+        "name",
+        "username",
+        "accountType"
+      ]
+    },
+    "ServiceRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ServiceRequest",
+      "type": "object",
+      "description": "Represents a service request posted by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the service request entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to User (the student who posted the request)."
+        },
+        "title": {
+            "type": "string",
+            "description": "The title of the service request."
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "The type of service requested (e.g., tutoring, design)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the service request."
+        },
+        "deadline": {
+          "type": "string",
+          "description": "The deadline for the service request.",
+          "format": "date-time"
+        },
+        "budget": {
+          "type": "number",
+          "description": "The budget allocated for the service request."
+        },
+        "skills": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "title",
+        "serviceType",
+        "description",
+        "deadline",
+        "budget"
+      ]
+    },
+    "Payment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payment",
+      "type": "object",
+      "description": "Represents a simulated payment transaction.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the payment entity."
+        },
+        "payerId": {
+          "type": "string",
+          "description": "Reference to User (payer)."
+        },
+        "payeeId": {
+          "type": "string",
+          "description": "Reference to User (payee)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the payment."
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "The date and time of the payment transaction.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "payerId",
+        "payeeId",
+        "amount",
+        "transactionDate"
+      ]
+    },
+    "Rating": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Rating",
+      "type": "object",
+      "description": "Represents a rating given by one user to another.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the rating entity."
+        },
+        "raterId": {
+          "type": "string",
+          "description": "Reference to User (rater)."
+        },
+        "rateeId": {
+          "type": "string",
+          "description": "Reference to User (ratee)."
+        },
+        "ratingValue": {
+          "type": "number",
+          "description": "The rating value (e.g., 1 to 5 stars)."
+        },
+        "reviewText": {
+          "type": "string",
+          "description": "Optional text review accompanying the rating."
+        }
+      },
+      "required": [
+        "id",
+        "raterId",
+        "rateeId",
+        "ratingValue"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/colleges/{collegeId}",
+        "definition": {
+          "entityName": "College",
+          "schema": {
+            "$ref": "#/backend/entities/College"
+          },
+          "description": "Stores college information. College management can create college profiles. Includes college ID as document ID.",
+          "params": [
+            {
+              "name": "collegeId",
+              "description": "The unique identifier for the college."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Each user document is created upon signup. Includes user's auth UID as document ID.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user (auth UID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/serviceRequests/{serviceRequestId}",
+        "definition": {
+          "entityName": "ServiceRequest",
+          "schema": {
+            "$ref": "#/backend/entities/ServiceRequest"
+          },
+          "description": "Top-level collection for all service requests for easy querying across the platform.",
+          "params": [
+            {
+              "name": "serviceRequestId",
+              "description": "The unique identifier for the service request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Stores payment transaction information. No ownership, so this will require more complex rules.",
+          "params": [
+            {
+              "name": "paymentId",
+              "description": "The unique identifier for the payment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/ratings/{ratingId}",
+        "definition": {
+          "entityName": "Rating",
+          "schema": {
+            "$ref": "#/backend/entities/Rating"
+          },
+          "description": "Stores ratings given by users to other users. No ownership, so this will require more complex rules.",
+          "params": [
+            {
+              "name": "ratingId",
+              "description": "The unique identifier for the rating."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the STUDORA application's core features. The `users` collection is the source of truth for user profiles. Service requests are in a top-level collection (`/serviceRequests`) for easy querying and browsing by all users, which simplifies security rules for public read access. User-owned data that isn't public (e.g. private chats) would be nested under `/users/{userId}/...` in a future iteration."
+  }
+}

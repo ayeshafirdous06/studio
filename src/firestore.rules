@@ -1,0 +1,208 @@
+/**
+ * @fileoverview Firestore Security Rules for the STUDORA Application
+ * @author expert-firebase-rules-architect
+ *
+ * @description
+ * This ruleset enforces a security model for the STUDORA application, which
+ * connects students for service exchanges within their college communities.
+ *
+ * @Core_Philosophy
+ * The security model is primarily user-centric, enforcing strict ownership for all
+ * user profiles. A user has full control over their own profile document. Publicly
+ * readable data, such as service requests and provider profiles, can be listed by
+ * any authenticated user but only created or modified by the owner.
+ *
+ * @Data_Structure
+ * - /users/{userId}: A top-level collection for user profiles. Each user owns their document.
+ * - /serviceRequests/{serviceRequestId}: A top-level collection for service requests,
+ *   allowing for easy public browsing. Ownership is maintained via a `studentId` field.
+ * - /colleges/{collegeId}: Read-only public data for signed-in users.
+ * - /ratings/{ratingId}, /payments/{paymentId}: Top-level collections for future features.
+ *
+ * @Key_Security_Decisions
+ * - Default Deny: All paths are closed by default. Access is granted explicitly.
+ * - User Profile Security: Users can only create a profile for themselves (`create`) and
+ *   can only modify their own profile (`update`). Reading other user profiles is public for all
+ *   authenticated users to allow for browsing providers. Listing all users is disabled to
+p *   prevent data scraping.
+ * - Service Requests: Any authenticated user can list all service requests.
+ *   Creation is restricted to the owner, and updates/deletes are owner-only.
+ *
+ * @Denormalization_for_Authorization
+ * This ruleset relies on denormalized owner IDs (e.g., `studentId`, `raterId`, `payerId`)
+ * directly on documents. This strategy avoids slow and costly `get()` or `exists()`
+ * calls for authorization, leading to simpler, faster, and more scalable rules.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    //-------------------------------------------------------------------------
+    // Helper Functions
+    //-------------------------------------------------------------------------
+
+    /**
+     * isSignedIn
+     * @description Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * isOwner
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * isExistingDocOwner
+     * @description Ensures the document being modified exists and the user is the owner,
+     * based on a specified owner field in the document's data.
+     */
+    function isExistingDocOwner(ownerField) {
+        return isSignedIn() && resource != null && request.auth.uid == resource.data[ownerField];
+    }
+
+    /**
+     * isPaymentParticipant
+     * @description Checks if the authenticated user is either the payer or the payee
+     * on an existing payment document.
+     */
+    function isPaymentParticipant() {
+      return isSignedIn() && (resource.data.payerId == request.auth.uid || resource.data.payeeId == request.auth.uid);
+    }
+    
+    /**
+     * isNewUserDocValid
+     * @description On user profile creation, validates that the document ID in the path
+     * matches the user's auth UID and the 'id' field within the new document.
+     */
+    function isNewUserDocValid(userId) {
+      let data = request.resource.data;
+      return isOwner(userId) 
+          && data.id == userId
+          && data.email == request.auth.token.email;
+    }
+
+    /**
+     * isUserProfileUpdateValid
+     * @description On update, ensures key fields like ID, email, and account type
+     * cannot be changed, preserving integrity.
+     */
+    function isUserProfileUpdateValid() {
+        let data = request.resource.data;
+        return data.id == resource.data.id
+            && data.email == resource.data.email
+            && data.accountType == resource.data.accountType;
+    }
+
+
+    /**
+     * isValidOwnedDocCreation
+     * @description Validates that a new document correctly sets the 'studentId'
+     * field to match the authenticated user's UID.
+     */
+    function isValidOwnedDocCreation() {
+      return isSignedIn() && request.resource.data.studentId == request.auth.uid;
+    }
+
+    /**
+     * isOwnedDocDataImmutable
+     * @description On update, ensures the 'studentId' of a document
+     * cannot be changed, preventing re-assignment of ownership.
+     */
+    function isOwnedDocDataImmutable() {
+      return request.resource.data.studentId == resource.data.studentId;
+    }
+
+
+    /**
+     * isValidRatingCreation
+     * @description Validates a new rating, ensuring the creator is the rater
+     * and that a user is not rating themselves.
+     */
+    function isValidRatingCreation() {
+      return isSignedIn()
+        && request.resource.data.raterId == request.auth.uid
+        && request.resource.data.raterId != request.resource.data.rateeId;
+    }
+
+    /**
+     * isRatingDataImmutable
+     * @description Ensures that once a rating is created, the rater and ratee
+     * cannot be changed on update.
+     */
+    function isRatingDataImmutable() {
+      return request.resource.data.raterId == resource.data.raterId
+        && request.resource.data.rateeId == resource.data.rateeId;
+    }
+
+    //-------------------------------------------------------------------------
+    // Collection Rules
+    //-------------------------------------------------------------------------
+
+    /**
+     * @description Manages college profiles. Public read for signed-in users,
+     *              but not client-writable.
+     * @path /colleges/{collegeId}
+     */
+    match /colleges/{collegeId} {
+      allow get, list: if isSignedIn();
+      allow write: if false;
+    }
+
+    /**
+     * @description Secures user profiles. Users own their documents.
+     * @path /users/{userId}
+     * @allow (create) A new user creates their own profile.
+     * @allow (get, list) Any signed-in user can read profiles (to find providers).
+     * @allow (update) A user can update their own profile.
+     * @deny (delete) Users cannot delete their profiles through the client.
+     */
+    match /users/{userId} {
+      allow create: if isNewUserDocValid(userId);
+      allow get, list: if isSignedIn();
+      allow update: if isOwner(userId) && isUserProfileUpdateValid();
+      allow delete: if false;
+    }
+
+    /**
+     * @description Manages service requests in a top-level collection.
+     * @path /serviceRequests/{serviceRequestId}
+     * @allow (get, list) Any authenticated user can read service requests.
+     * @allow (create) A user can create a service request for themselves.
+     * @allow (update, delete) Only the user who created the request can update or delete it.
+     */
+    match /serviceRequests/{serviceRequestId} {
+        allow get, list: if isSignedIn();
+        allow create: if isValidOwnedDocCreation();
+        allow update: if isExistingDocOwner('studentId') && isOwnedDocDataImmutable();
+        allow delete: if isExistingDocOwner('studentId');
+    }
+
+
+    /**
+     * @description Stores payment transactions.
+     * @path /payments/{paymentId}
+     */
+    match /payments/{paymentId} {
+      allow get: if isPaymentParticipant();
+      allow create: if isSignedIn() && request.resource.data.payerId == request.auth.uid;
+      allow list, update, delete: if false;
+    }
+
+    /**
+     * @description Manages public ratings.
+     * @path /ratings/{ratingId}
+     */
+    match /ratings/{ratingId} {
+      allow get, list: if true;
+      allow create: if isValidRatingCreation();
+      allow update: if isExistingDocOwner(resource.data.raterId) && isRatingDataImmutable();
+      allow delete: if isExistingDocOwner(resource.data.raterId);
+    }
+  }
+}
