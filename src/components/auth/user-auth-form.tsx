@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, orderBy } from "firebase/firestore";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 
 import { cn } from "@/lib/utils";
@@ -53,7 +53,10 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
       firestore
         ? query(
             collection(firestore, 'colleges'),
-            where('approvalStatus', '==', true)
+            where('approvalStatus', '==', true),
+            where('city', '==', 'Hyderabad'),
+            where('state', '==', 'Telangana'),
+            orderBy('name')
           )
         : null,
     [firestore]
