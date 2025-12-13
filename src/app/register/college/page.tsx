@@ -1,3 +1,4 @@
+
 import { SiteHeader } from "@/components/common/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,20 +11,20 @@ import { BackButton } from "@/components/common/back-button";
 const subscriptionTiers = [
     {
         name: "Basic",
-        price: "$100",
+        price: "₹8,000",
         priceDetail: "/year for up to 500 students",
         features: ["Student Authentication", "Service Marketplace", "Basic Support"],
     },
     {
         name: "Standard",
-        price: "$200",
+        price: "₹16,000",
         priceDetail: "/year for up to 5000 students",
         features: ["All Basic Features", "AI Skill Recommendation", "Priority Support"],
         isFeatured: true,
     },
     {
         name: "Premium",
-        price: "$400",
+        price: "₹32,000",
         priceDetail: "/year for unlimited students",
         features: ["All Standard Features", "College-wide Analytics", "Custom Branding", "On-campus Promotions"],
     },

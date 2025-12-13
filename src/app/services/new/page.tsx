@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -141,8 +142,8 @@ export default function NewServiceRequestPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="budget">Budget ($)</Label>
-                  <Input id="budget" type="number" placeholder="e.g., 50" {...register('budget')} />
+                  <Label htmlFor="budget">Budget (₹)</Label>
+                  <Input id="budget" type="number" placeholder="e.g., 5000" {...register('budget')} />
                   {errors.budget && <p className="text-sm text-destructive">{errors.budget.message}</p>}
                 </div>
               </div>

@@ -96,8 +96,8 @@ export default function DashboardPage() {
                                             <span>{request.serviceType}</span>
                                         </div>
                                         <div className="flex items-center text-sm text-muted-foreground">
-                                            <DollarSign className="mr-2 h-4 w-4" />
-                                            <span>Budget: ${request.budget}</span>
+                                            <span className="font-bold text-lg mr-2">₹</span>
+                                            <span>Budget: {request.budget}</span>
                                         </div>
                                         <div className="flex items-center text-sm text-muted-foreground">
                                             <Clock className="mr-2 h-4 w-4" />
