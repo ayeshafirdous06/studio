@@ -16,6 +16,8 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
 
 type UserProfile = {
   id: string;
@@ -47,6 +49,7 @@ type ServiceRequest = {
 export default function DashboardPage() {
     const [currentUser] = useLocalStorage<UserProfile | null>('userProfile', null);
     const firestore = useFirestore();
+    const [searchQuery, setSearchQuery] = useState("");
 
     const isProvider = currentUser?.accountType === 'provider';
     const defaultTab = isProvider ? "requests" : "providers";
@@ -73,6 +76,10 @@ export default function DashboardPage() {
     }, [firestore]);
     const { data: users, isLoading: usersLoading } = useCollection<UserProfile>(usersQuery);
 
+    const filteredProviders = serviceProviders?.filter(provider => 
+        provider.username.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
 
     return (
         <div className="container py-8">
@@ -95,7 +102,7 @@ export default function DashboardPage() {
             </div>
 
             <Tabs defaultValue={defaultTab} className="w-full">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     {isProvider ? (
                         <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
                             <TabsTrigger value="requests">Service Requests</TabsTrigger>
@@ -104,6 +111,15 @@ export default function DashboardPage() {
                     ) : (
                          <h2 className="text-2xl font-semibold">Find a Provider</h2>
                     )}
+                     <div className="relative w-full md:w-auto">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search by username..." 
+                            className="pl-8 w-full md:w-[300px]" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
                 </div>
                 
                 {isProvider && (
@@ -171,7 +187,7 @@ export default function DashboardPage() {
                         </div>
                      ) : (
                          <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
-                            {serviceProviders && serviceProviders.length > 0 ? serviceProviders.map(provider => {
+                            {filteredProviders && filteredProviders.length > 0 ? filteredProviders.map(provider => {
                                  return (
                                     <Card key={provider.id} className="flex flex-col">
                                         <CardHeader className="items-center text-center">
@@ -180,6 +196,7 @@ export default function DashboardPage() {
                                                 <AvatarFallback className="text-3xl">{provider.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <CardTitle>{provider.name}</CardTitle>
+                                            <CardDescription>@{provider.username}</CardDescription>
                                             <CardDescription>{provider.tagline}</CardDescription>
                                             <div className="flex items-center pt-2">
                                                 <Star className="h-5 w-5 text-yellow-400 fill-yellow-400 mr-1" />
@@ -205,7 +222,7 @@ export default function DashboardPage() {
                                         </CardFooter>
                                     </Card>
                                  )
-                            }) : <p className="text-muted-foreground col-span-full">No service providers have signed up yet.</p>}
+                            }) : <p className="text-muted-foreground col-span-full text-center">No service providers found for "{searchQuery}".</p>}
                          </div>
                      )}
                 </TabsContent>
@@ -213,3 +230,5 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+    

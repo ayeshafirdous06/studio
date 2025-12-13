@@ -200,8 +200,10 @@ service cloud.firestore {
     match /ratings/{ratingId} {
       allow get, list: if true;
       allow create: if isValidRatingCreation();
-      allow update: if isExistingDocOwner(resource.data.raterId) && isRatingDataImmutable();
-      allow delete: if isExistingDocOwner(resource.data.raterId);
+      allow update: if isExistingDocOwner('raterId') && isRatingDataImmutable();
+      allow delete: if isExistingDocOwner('raterId');
     }
   }
 }
+
+    
