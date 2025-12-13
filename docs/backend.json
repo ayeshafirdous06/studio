@@ -1,0 +1,394 @@
+{
+  "entities": {
+    "College": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "College",
+      "type": "object",
+      "description": "Represents a college in Hyderabad.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the College entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the college."
+        },
+        "collegeType": {
+          "type": "string",
+          "description": "The type of college (Engineering / Degree / Women’s)."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city where the college is located (Hyderabad)."
+        },
+        "state": {
+          "type": "string",
+          "description": "The state where the college is located (Telangana)."
+        },
+        "approvalStatus": {
+          "type": "boolean",
+          "description": "The approval status of the college."
+        },
+        "subscriptionId": {
+          "type": "string",
+          "description": "Reference to Subscription. (Relationship: College 1:1 Subscription)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "collegeType",
+        "city",
+        "state",
+        "approvalStatus",
+        "subscriptionId"
+      ]
+    },
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student enrolled in a college.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Student entity."
+        },
+        "collegeId": {
+          "type": "string",
+          "description": "Reference to College. (Relationship: College 1:N Student)"
+        },
+        "email": {
+          "type": "string",
+          "description": "Student's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the student."
+        },
+        "ratingIds": {
+          "type": "array",
+          "description": "References to Ratings. (Relationship: Student N:N Rating)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "collegeId",
+        "email",
+        "name"
+      ]
+    },
+    "Subscription": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Subscription",
+      "type": "object",
+      "description": "Represents a subscription plan for a college.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Subscription entity."
+        },
+        "planName": {
+          "type": "string",
+          "description": "The name of the subscription plan (e.g., Basic, Standard, Premium)."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of the subscription plan in INR."
+        },
+        "duration": {
+          "type": "number",
+          "description": "Subscription duration in number of days."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The start date of the subscription.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The end date of the subscription.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "planName",
+        "price",
+        "startDate",
+        "endDate"
+      ]
+    },
+    "ServiceRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ServiceRequest",
+      "type": "object",
+      "description": "Represents a service request posted by a student.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ServiceRequest entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N ServiceRequest)"
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "The type of service requested."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the service request."
+        },
+        "deadline": {
+          "type": "string",
+          "description": "The deadline for the service request.",
+          "format": "date-time"
+        },
+        "budget": {
+          "type": "number",
+          "description": "The budget for the service request."
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "serviceType",
+        "description",
+        "deadline",
+        "budget"
+      ]
+    },
+    "ServiceProviderListing": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ServiceProviderListing",
+      "type": "object",
+      "description": "Represents a service provider listing with skills.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ServiceProviderListing entity."
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Reference to Student. (Relationship: Student 1:N ServiceProviderListing)"
+        },
+        "skillIds": {
+          "type": "array",
+          "description": "References to Skills. (Relationship: ServiceProviderListing N:N Skill)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "studentId",
+        "skillIds"
+      ]
+    },
+    "Skill": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Skill",
+      "type": "object",
+      "description": "Represents a skill listed by a student.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Skill entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the skill."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Rating": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Rating",
+      "type": "object",
+      "description": "Represents a rating given by one student to another.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Rating entity."
+        },
+        "raterId": {
+          "type": "string",
+          "description": "Reference to Student who gave the rating. (Relationship: Student 1:N Rating)"
+        },
+        "rateeId": {
+          "type": "string",
+          "description": "Reference to Student who received the rating. (Relationship: Student 1:N Rating)"
+        },
+        "ratingValue": {
+          "type": "number",
+          "description": "The rating value."
+        },
+        "reviewText": {
+          "type": "string",
+          "description": "The text of the review."
+        }
+      },
+      "required": [
+        "id",
+        "raterId",
+        "rateeId",
+        "ratingValue"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "colleges/{collegeId}",
+        "definition": {
+          "entityName": "College",
+          "schema": {
+            "$ref": "#/backend/entities/College"
+          },
+          "description": "Stores college information, including name, type, city, state, approval status, and subscription details. Includes denormalized 'subscriptionId' for authorization independence.",
+          "params": [
+            {
+              "name": "collegeId",
+              "description": "Unique identifier for the college."
+            }
+          ]
+        }
+      },
+      {
+        "path": "subscriptions/{subscriptionId}",
+        "definition": {
+          "entityName": "Subscription",
+          "schema": {
+            "$ref": "#/backend/entities/Subscription"
+          },
+          "description": "Stores subscription plan details for colleges.",
+          "params": [
+            {
+              "name": "subscriptionId",
+              "description": "Unique identifier for the subscription."
+            }
+          ]
+        }
+      },
+      {
+        "path": "colleges/{collegeId}/students/{studentId}",
+        "definition": {
+          "entityName": "Student",
+          "schema": {
+            "$ref": "#/backend/entities/Student"
+          },
+          "description": "Stores student information, organized under their respective colleges. Enforces path-based ownership.",
+          "params": [
+            {
+              "name": "collegeId",
+              "description": "Unique identifier for the college."
+            },
+            {
+              "name": "studentId",
+              "description": "Unique identifier for the student."
+            }
+          ]
+        }
+      },
+      {
+        "path": "colleges/{collegeId}/students/{studentId}/serviceRequests/{serviceRequestId}",
+        "definition": {
+          "entityName": "ServiceRequest",
+          "schema": {
+            "$ref": "#/backend/entities/ServiceRequest"
+          },
+          "description": "Stores service requests posted by students, nested under student documents. Enforces path-based ownership.",
+          "params": [
+            {
+              "name": "collegeId",
+              "description": "Unique identifier for the college."
+            },
+            {
+              "name": "studentId",
+              "description": "Unique identifier for the student."
+            },
+            {
+              "name": "serviceRequestId",
+              "description": "Unique identifier for the service request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "colleges/{collegeId}/students/{studentId}/serviceProviderListings/{serviceProviderListingId}",
+        "definition": {
+          "entityName": "ServiceProviderListing",
+          "schema": {
+            "$ref": "#/backend/entities/ServiceProviderListing"
+          },
+          "description": "Stores service provider listings created by students, nested under student documents. Enforces path-based ownership.",
+          "params": [
+            {
+              "name": "collegeId",
+              "description": "Unique identifier for the college."
+            },
+            {
+              "name": "studentId",
+              "description": "Unique identifier for the student."
+            },
+            {
+              "name": "serviceProviderListingId",
+              "description": "Unique identifier for the service provider listing."
+            }
+          ]
+        }
+      },
+      {
+        "path": "skills/{skillId}",
+        "definition": {
+          "entityName": "Skill",
+          "schema": {
+            "$ref": "#/backend/entities/Skill"
+          },
+          "description": "Stores the list of available skills.",
+          "params": [
+            {
+              "name": "skillId",
+              "description": "Unique identifier for the skill."
+            }
+          ]
+        }
+      },
+      {
+        "path": "ratings/{ratingId}",
+        "definition": {
+          "entityName": "Rating",
+          "schema": {
+            "$ref": "#/backend/entities/Rating"
+          },
+          "description": "Stores ratings given by students to each other.",
+          "params": [
+            {
+              "name": "ratingId",
+              "description": "Unique identifier for the rating."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support a Hyderabad-focused student talent and earning platform. It prioritizes authorization independence, clarity, and scalability. Colleges and their subscriptions are managed centrally.  Each college document contains the subscription ID, facilitating quick lookups. Students are organized under their respective colleges to streamline access control and data retrieval. The service marketplace, skills, and rating systems are structured to ensure efficient querying and maintain data integrity. This architecture ensures authorization independence by avoiding hierarchical `get()` calls in security rules. Instead, necessary authorization data, like the `subscriptionId` within the `colleges` collection is directly available within the relevant documents. The design supports the required QAPs by using structural segregation to manage public vs. private data and implementing a membership model where appropriate. The structure avoids mixing data with different access needs in the same collection, ensuring simpler and more robust security rules."
+  }
+}

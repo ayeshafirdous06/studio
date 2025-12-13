@@ -1,0 +1,239 @@
+/**
+ * @file firestore.rules
+ * @description Firestore Security Rules for a Hyderabad-focused student talent platform.
+ *
+ * @section Core Philosophy
+ * This ruleset enforces a strict user-ownership model for student-generated content while
+ * providing public, read-only access to master data like colleges and skills. The primary
+ * goal is to ensure that students can only access and modify their own information (service
+ * requests, listings, etc.), and that the integrity of the platform's core data is maintained.
+ *
+ * @section Data Structure
+ * - Master data (e.g., /colleges, /skills) is stored in top-level collections and is intended
+ *   to be managed by backend administrators, not clients.
+ * - All student-specific data is hierarchically nested under their college and their unique
+ *   student ID (e.g., /colleges/{collegeId}/students/{studentId}/...). This structure simplifies
+ *   ownership-based security rules.
+ *
+ * @section Key Security Decisions
+ * - **Admin-Managed Data**: Direct client-side writes to /colleges, /subscriptions, and /skills
+ *   are explicitly forbidden to prevent unauthorized modification of core platform data.
+ * - **Strict Student Scoping**: A user's access is strictly confined to their own document tree
+ *   under /.../students/{userId}. They cannot read or list other students' private data.
+ * - **Conditional Registration**: A student can only be created (/students/{studentId}) if their
+ *   chosen college is approved and has an active, valid subscription. This check is performed
+ *   using `get()` calls to ensure data integrity at the point of user creation.
+ * - **Public but Secure Ratings**: The /ratings collection is publicly readable, but only the
+ *   student who created a rating (the 'rater') can modify or delete it.
+ *
+ * @section Denormalization for Authorization
+ * To ensure fast and secure rule execution, authorization data is denormalized where necessary.
+ * For example, the /colleges/{collegeId} document contains a `subscriptionId`. This allows the
+ * student creation rule to check subscription status with a direct `get()` call, avoiding slow
+ * and complex queries.
+ *
+ * @section Structural Segregation
+ * The ruleset leverages separate collections for data with different access patterns. Publicly
+ * readable data like /colleges and /skills is separated from private, user-owned data in
+ * nested subcollections like /serviceRequests. This prevents accidental data leakage and simplifies
+ * list operation security.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks ownership for an existing resource. Used for update/delete.
+     * Ensures the document exists before allowing the operation.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Validates that a college is approved and has an active subscription.
+     * This performs two `get()` calls, which are counted against the request's read quota.
+     * Assumes `endDate` is a valid Timestamp object.
+     */
+    function isCollegeApprovedAndActive(collegeId) {
+      let college = get(/databases/$(database)/documents/colleges/$(collegeId)).data;
+      let subscription = get(/databases/$(database)/documents/subscriptions/$(college.subscriptionId)).data;
+      return college.approvalStatus == true && request.time < subscription.endDate;
+    }
+
+    /**
+     * @description Ensures the new Student document's ID fields match the path parameters.
+     * This enforces relational integrity on creation.
+     */
+    function hasValidNewStudentFields(studentId, collegeId) {
+      let data = request.resource.data;
+      return data.id == studentId && data.collegeId == collegeId;
+    }
+
+    /**
+     * @description Enforces immutability of critical relational fields for a Student document.
+     */
+    function hasImmutableStudentFields() {
+      let data = request.resource.data;
+      return data.id == resource.data.id && data.collegeId == resource.data.collegeId;
+    }
+
+    /**
+     * @description Ensures the new Service Request or Listing document correctly links to its owner.
+     */
+    function hasValidNewOwnerLink(studentId) {
+      return request.resource.data.studentId == studentId;
+    }
+
+    /**
+     * @description Enforces immutability of the owner link on Service Requests or Listings.
+     */
+    function hasImmutableOwnerLink() {
+      return request.resource.data.studentId == resource.data.studentId;
+    }
+    
+    /**
+     * @description Validates that the creator of a new rating is the authenticated user.
+     */
+    function hasValidNewRatingFields() {
+      return request.resource.data.raterId == request.auth.uid;
+    }
+
+    /**
+     * @description Enforces immutability of the rater and ratee IDs in a rating.
+     */
+    function hasImmutableRatingFields() {
+      let data = request.resource.data;
+      return data.raterId == resource.data.raterId && data.rateeId == resource.data.rateeId;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Defines rules for the 'colleges' collection.
+     * This collection is public-readable but centrally managed.
+     * @path /colleges/{collegeId}
+     * @allow (get) Any user, signed in or not, can read a college's details.
+     * @deny (create) A regular user cannot create a new college document. This is an admin task.
+     * @principle Protects master data by making it read-only for clients.
+     */
+    match /colleges/{collegeId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // Managed by backend/admins only
+    }
+
+    /**
+     * @description Defines rules for the 'subscriptions' collection.
+     * This data is sensitive and should not be directly exposed to clients.
+     * @path /subscriptions/{subscriptionId}
+     * @allow (none) No client can directly read or write subscription data.
+     * @deny (get) A client application cannot fetch subscription details directly.
+     * @principle Enforces maximum security on sensitive data by denying all client access.
+     */
+    match /subscriptions/{subscriptionId} {
+      allow get, list: if false;
+      allow create, update, delete: if false; // Managed by backend/admins only
+    }
+
+    /**
+     * @description Defines rules for the 'skills' collection.
+     * This is a global list of skills, public-readable but centrally managed.
+     * @path /skills/{skillId}
+     * @allow (list) Any user, signed in or not, can list all available skills.
+     * @deny (update) A regular user cannot modify a skill. This is an admin task.
+     * @principle Protects master data by making it read-only for clients.
+     */
+    match /skills/{skillId} {
+      allow get, list: if true;
+      allow create, update, delete: if false; // Managed by backend/admins only
+    }
+    
+    /**
+     * @description Defines rules for the 'ratings' collection.
+     * Ratings are public to view, but only the author can create, update, or delete them.
+     * @path /ratings/{ratingId}
+     * @allow (create) A signed-in user ('user_abc') can create a rating where `raterId` is 'user_abc'.
+     * @deny (update) A user ('user_xyz') cannot update a rating created by 'user_abc'.
+     * @principle Implements a "Public Read, Owner Write" model based on the 'raterId' field.
+     */
+    match /ratings/{ratingId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && hasValidNewRatingFields();
+      allow update: if isExistingOwner(request.resource.data.raterId) && hasImmutableRatingFields();
+      allow delete: if isExistingOwner(request.resource.data.raterId);
+    }
+    
+    /**
+     * @description Nested rules for student-specific data within a college.
+     */
+    match /colleges/{collegeId} {
+    
+      /**
+       * @description Defines rules for the 'students' subcollection.
+       * A student document is the root for all of a user's private data.
+       * @path /colleges/{collegeId}/students/{studentId}
+       * @allow (create) A user with UID 'user_abc' can create their own student document at /students/user_abc, but only if the college is approved and has an active subscription.
+       * @deny (get) A user with UID 'user_xyz' cannot read the student document for 'user_abc'.
+       * @deny (create) A user cannot create a student document if the college's subscription has expired.
+       * @principle Restricts access to a user's own data tree and validates college status on registration.
+       */
+      match /students/{studentId} {
+        allow get: if isOwner(studentId);
+        allow list: if false; // Prevent students from listing other students in their college
+        allow create: if isOwner(studentId) && isCollegeApprovedAndActive(collegeId) && hasValidNewStudentFields(studentId, collegeId);
+        allow update: if isExistingOwner(studentId) && hasImmutableStudentFields();
+        allow delete: if isExistingOwner(studentId);
+      
+        /**
+         * @description Defines rules for a student's 'serviceRequests'.
+         * This data is private and owned entirely by the student.
+         * @path /colleges/{collegeId}/students/{studentId}/serviceRequests/{serviceRequestId}
+         * @allow (create) User 'user_abc' can create a service request under their own student path.
+         * @deny (list) User 'user_xyz' cannot list the service requests of 'user_abc'.
+         * @principle Enforces strict document ownership within a user's data tree.
+         */
+        match /serviceRequests/{serviceRequestId} {
+          allow get, list: if isOwner(studentId);
+          allow create: if isOwner(studentId) && hasValidNewOwnerLink(studentId);
+          allow update: if isExistingOwner(studentId) && hasImmutableOwnerLink();
+          allow delete: if isExistingOwner(studentId);
+        }
+
+        /**
+         * @description Defines rules for a student's 'serviceProviderListings'.
+         * This data is private and owned entirely by the student.
+         * @path /colleges/{collegeId}/students/{studentId}/serviceProviderListings/{serviceProviderListingId}
+         * @allow (delete) User 'user_abc' can delete their own service provider listing.
+         * @deny (update) User 'user_xyz' cannot update a listing owned by 'user_abc'.
+         * @principle Enforces strict document ownership within a user's data tree.
+         */
+        match /serviceProviderListings/{serviceProviderListingId} {
+          allow get, list: if isOwner(studentId);
+          allow create: if isOwner(studentId) && hasValidNewOwnerLink(studentId);
+          allow update: if isExistingOwner(studentId) && hasImmutableOwnerLink();
+          allow delete: if isExistingOwner(studentId);
+        }
+      }
+    }
+  }
+}
