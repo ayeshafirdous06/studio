@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, UserPlus, ArrowRight } from 'lucide-react';
+import { Briefcase, UserPlus, ArrowRight, School } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { placeholderImages } from '@/lib/placeholder-images';
@@ -83,6 +83,16 @@ export default function AccountTypeSelectionPage() {
                Log In
              </Link>
            </p>
+            <p className="mt-4 text-center text-sm text-white/60">
+              Are you a college administrator?{' '}
+              <Link
+                href="/register/college"
+                className="font-semibold text-white underline-offset-4 hover:underline"
+              >
+                Register your campus
+              </Link>
+              .
+            </p>
         </div>
       </div>
     </div>
