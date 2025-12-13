@@ -238,7 +238,6 @@ export default function ProfilePage() {
                                             <p className="text-muted-foreground">No reviews yet.</p>
                                         </CardContent>
                                     </Card>
-                                </Card>
                                 </TabsContent>
                             )}
                         </Tabs>
