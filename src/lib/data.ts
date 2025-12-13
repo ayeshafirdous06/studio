@@ -148,7 +148,8 @@ export const serviceRequests = [
         budget: 1500,
         deadline: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
         skills: ['Logo Design', 'Graphic Design', 'Branding'],
-        status: 'Open'
+        status: 'Open',
+        providerId: null,
     },
     {
         id: 'req-2',
@@ -159,7 +160,8 @@ export const serviceRequests = [
         budget: 3000,
         deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days from now
         skills: ['Python', 'Data Science', 'Pandas', 'Tutoring'],
-        status: 'Open'
+        status: 'Open',
+        providerId: null,
     },
     {
         id: 'req-3',
@@ -170,8 +172,21 @@ export const serviceRequests = [
         budget: 5000,
         deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days from now
         skills: ['Photography', 'Portrait Photography', 'Photo Editing'],
-        status: 'Open'
-    }
+        status: 'In Progress',
+        providerId: 'user-3'
+    },
+    {
+        id: 'req-4',
+        studentId: 'user-1',
+        title: 'Video Editing for a College Fest Promo',
+        description: 'Need a short, punchy promo video for our upcoming college festival. We have the raw footage, just need someone to edit it together with music and graphics.',
+        serviceType: 'Video',
+        budget: 4000,
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        skills: ['Video Editing', 'Adobe Premiere', 'After Effects'],
+        status: 'Open',
+        providerId: null,
+    },
 ];
 
 

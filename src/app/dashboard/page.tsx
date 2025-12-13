@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { PlusCircle, Star, Briefcase, Clock, User, Search } from "lucide-react";
+import { PlusCircle, Star, Briefcase, Clock, User, Search, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -83,12 +83,12 @@ export default function DashboardPage() {
                         return (
                             <Card key={provider.id}>
                                 <CardHeader className="flex flex-col items-center text-center">
-                                    <CardTitle className="text-2xl">{provider.name}</CardTitle>
-                                    <p className="text-sm text-muted-foreground">@{provider.username}</p>
-                                    <Avatar className="h-24 w-24 my-4">
+                                     <Avatar className="h-24 w-24 mb-4">
                                         {providerAvatar && <AvatarImage src={providerAvatar.imageUrl} alt={provider.name} />}
                                         <AvatarFallback className="text-3xl">{provider.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
+                                    <CardTitle className="text-xl">{provider.name}</CardTitle>
+                                    <p className="text-sm text-muted-foreground">@{provider.username}</p>
                                 </CardHeader>
                                 <CardContent className="text-center">
                                     <p className="text-sm text-muted-foreground mb-3 line-clamp-2 h-10">{provider.tagline}</p>
@@ -119,10 +119,14 @@ export default function DashboardPage() {
                  <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
                     {serviceRequests.map(request => {
                         const requestor = serviceProviders.find(p => p.id === request.studentId);
-                         const requestorAvatar = requestor ? placeholderImages.find(p => p.id === requestor.avatarId) : null;
+                        const requestorAvatar = requestor ? placeholderImages.find(p => p.id === requestor.avatarId) : null;
+                        const acceptedProvider = request.providerId ? serviceProviders.find(p => p.id === request.providerId) : null;
                         
+                        const isMyRequest = currentUser?.id === request.studentId;
+                        const isAccepted = request.status === 'In Progress';
+
                         return (
-                            <Card key={request.id}>
+                            <Card key={request.id} className={cn(isAccepted && "bg-muted/50 border-dashed")}>
                                 <CardHeader>
                                     <CardTitle className="line-clamp-2">{request.title}</CardTitle>
                                     <CardDescription className="flex items-center gap-2 pt-2">
@@ -148,11 +152,20 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardFooter>
-                                    {currentUser?.id === request.studentId ? (
+                                <CardFooter className="flex flex-col items-start gap-3">
+                                    {isAccepted && acceptedProvider && (
+                                        <div className="w-full text-center text-sm p-2 rounded-md bg-accent text-accent-foreground flex items-center justify-center gap-2">
+                                            <CheckCircle2 className="h-4 w-4" />
+                                            <span>Offer accepted from @{acceptedProvider.username}</span>
+                                        </div>
+                                    )}
+
+                                    {isMyRequest ? (
                                          <Button className="w-full" variant="secondary">Manage</Button>
                                     ) : isProvider ? (
-                                        <Button className="w-full">Place Bid</Button>
+                                        <Button className="w-full" disabled={isAccepted}>
+                                            {isAccepted ? 'Offer Accepted' : 'Place Bid'}
+                                        </Button>
                                     ) : (
                                         <Button className="w-full" disabled>Sign up as Provider to Bid</Button>
                                     )}
