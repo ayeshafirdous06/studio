@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useEffect, useState } from "react";
 
 type UserProfile = {
   name: string;
@@ -27,6 +28,11 @@ export function SiteHeader() {
   const { user, isUserLoading } = useUser();
   const [userProfile] = useLocalStorage<UserProfile | null>('userProfile', null);
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const navLinks = [
     { href: "/dashboard", label: "Marketplace" },
@@ -117,7 +123,8 @@ export function SiteHeader() {
         </div>
 
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="md:hidden">
+         {isClient && (
+           <div className="md:hidden">
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -146,6 +153,7 @@ export function SiteHeader() {
               </SheetContent>
             </Sheet>
           </div>
+         )}
            <Link href="/dashboard" className="flex items-center space-x-2 md:hidden">
             <BookOpenCheck className="h-6 w-6 text-primary" />
             <span className="font-bold sm:inline-block">STUDORA</span>
