@@ -57,19 +57,23 @@ export default function ProfilePage() {
         if (currentUser && currentUser.id) {
             setIsLoading(false);
         } else {
-            // If no profile, wait a bit to see if it loads, then redirect if it's still missing.
+            // If no profile from useLocalStorage, wait a bit to see if it loads from async storage,
+            // then redirect if it's still missing. This handles race conditions on initial load.
             const timer = setTimeout(() => {
                 const storedProfile = localStorage.getItem('userProfile');
                 if (!storedProfile || Object.keys(JSON.parse(storedProfile)).length === 0) {
-                   // This may happen if the user lands here without creating a profile
-                   // Redirecting to a safe page like dashboard or login might be a good idea.
-                   // For now, we'll just stop loading and show an error message.
+                   // Only stop loading if we've waited and there's still no profile.
+                   // The page will then render the "Profile Not Found" message.
                    setIsLoading(false); 
+                } else {
+                   // If it loaded in the meantime, update our state
+                   setCurrentUser(JSON.parse(storedProfile));
+                   setIsLoading(false);
                 }
-            }, 1500);
+            }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [currentUser, router]);
+    }, [currentUser, router, setCurrentUser]);
 
     const handleGetRecommendations = async () => {
         if (!profileSummary) {
@@ -308,5 +312,3 @@ export default function ProfilePage() {
         </>
     )
 }
-
-    
