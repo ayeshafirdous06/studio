@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { SiteHeader } from '@/components/common/site-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,7 +37,7 @@ const conversations = [
   },
 ];
 
-const messages = [
+const initialMessages = [
   { id: 'msg-1', senderId: '1', text: 'Hey! I saw your request for Calculus tutoring.', isCurrentUser: false },
   { id: 'msg-2', senderId: 'current_user', text: 'Hi! Yes, I\'m struggling a bit with integration.', isCurrentUser: true },
   { id: 'msg-3', senderId: '1', text: 'Sure, I can help with that!', isCurrentUser: false },
@@ -46,6 +47,35 @@ export default function MessagesPage() {
   const activeChatConvo = conversations[0];
   const activeChatUser = users.find(u => u.id === activeChatConvo.userId);
   const activeChatAvatar = activeChatUser ? placeholderImages.find(p => p.id === activeChatUser.avatarId) : null;
+  
+  const [messages, setMessages] = useState(initialMessages);
+  const [newMessage, setNewMessage] = useState('');
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMessage.trim() === '') return;
+
+    const message = {
+      id: `msg-${Date.now()}`,
+      senderId: 'current_user',
+      text: newMessage,
+      isCurrentUser: true,
+    };
+
+    setMessages([...messages, message]);
+    setNewMessage('');
+  };
+
+  useEffect(() => {
+    // Scroll to the bottom when messages change
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages]);
 
 
   return (
@@ -110,7 +140,7 @@ export default function MessagesPage() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="flex-1 p-4 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-4" ref={scrollAreaRef}>
                 <div className="space-y-4">
                     {messages.map((msg) => {
                         const sender = msg.isCurrentUser ? null : users.find(u => u.id === msg.senderId);
@@ -135,15 +165,20 @@ export default function MessagesPage() {
                         )
                     })}
                 </div>
-                </CardContent>
-                <div className="p-4 border-t">
-                <div className="relative">
-                    <Input placeholder="Type your message..." className="pr-12" />
-                    <Button size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
-                    <Send className="h-4 w-4" />
-                    <span className="sr-only">Send</span>
-                    </Button>
                 </div>
+                <div className="p-4 border-t">
+                  <form onSubmit={handleSendMessage} className="relative">
+                    <Input 
+                      placeholder="Type your message..." 
+                      className="pr-12"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                    />
+                    <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
+                      <Send className="h-4 w-4" />
+                      <span className="sr-only">Send</span>
+                    </Button>
+                  </form>
                 </div>
             </Card>
            )}
