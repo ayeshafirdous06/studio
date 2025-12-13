@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,10 @@ export default function DashboardPage() {
                                                     <span>{student.name}</span>
                                                 </div>
                                         )}
-                                        <Button variant="outline">View & Offer</Button>
+                                        <div className="flex items-center gap-2">
+                                            <Button variant="outline" size="sm">Make Offer</Button>
+                                            <Button variant="ghost" size="sm">Dismiss</Button>
+                                        </div>
                                         </CardFooter>
                                     </Card>
                                 )

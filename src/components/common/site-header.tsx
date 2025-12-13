@@ -1,13 +1,21 @@
 
+
 'use client';
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, BookOpenCheck, User as UserIcon } from "lucide-react";
+import { Menu, BookOpenCheck, User as UserIcon, MessageSquare } from "lucide-react";
 import { useUser } from "@/firebase";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { usePathname } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 
 export function SiteHeader() {
   const { user, isUserLoading } = useUser();
@@ -30,15 +38,38 @@ export function SiteHeader() {
 
     if (user) {
       return (
-        <Button variant="ghost" asChild>
-          <Link href="/profile">
-            <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src={user.photoURL ?? ''} />
-              <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
-            </Avatar>
-            My Profile
-          </Link>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost">
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={user.photoURL ?? ''} />
+                <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span>My Account</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <Link href="/profile">
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/messages">
+                 <MessageSquare className="mr-2 h-4 w-4" />
+                 <span>Messages</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {/* The logout functionality is handled on the profile page, but can be moved here */}
+            <DropdownMenuItem asChild>
+              <Link href="/profile">
+                <span>Log Out</span>
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     }
 
