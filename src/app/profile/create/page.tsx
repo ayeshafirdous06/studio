@@ -27,11 +27,14 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { colleges } from '@/lib/data';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   username: z.string().min(3, 'Username must be at least 3 characters.').regex(/^[a-z0-9_.]+$/, 'Username can only contain lowercase letters, numbers, underscores, and dots.'),
   avatarUrl: z.string().optional(),
+  collegeId: z.string({ required_error: "Please select your college." }).min(1, "Please select your college."),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -49,6 +52,8 @@ export default function CreateProfilePage() {
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
   const [isGoogleSignIn, setIsGoogleSignIn] = useState(false);
+  
+  const approvedColleges = colleges.filter(c => c.approvalStatus);
 
 
   const {
@@ -76,6 +81,9 @@ export default function CreateProfilePage() {
       }
       if (data.username) {
         setValue('username', data.username);
+      }
+       if (data.collegeId) {
+        setValue('collegeId', data.collegeId);
       }
       // A simple check to see if it was a Google sign-in
       if (data.uid) {
@@ -144,6 +152,7 @@ export default function CreateProfilePage() {
               id: signupData?.uid || signupData?.email || 'user-1', 
               rating: 4.8, 
               earnings: 1250.00,
+              accountType: signupData?.accountType || 'seeker',
               // Provide a fallback Dicebear avatar if no image is uploaded
               avatarUrl: data.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${data.name}`
             }; 
@@ -215,6 +224,31 @@ export default function CreateProfilePage() {
                 {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
               </div>
 
+              <div className="grid gap-2">
+                <Label htmlFor="college">College</Label>
+                <Select onValueChange={(value) => setValue('collegeId', value, { shouldValidate: true })} disabled={isSubmitting} defaultValue={getValues('collegeId')}>
+                  <SelectTrigger id="college">
+                    <SelectValue placeholder={"Select your college"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {approvedColleges.length > 0 ? (
+                      approvedColleges.map((college) => (
+                        <SelectItem key={college.id} value={college.id}>
+                          {college.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                        <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {errors.collegeId && (
+                  <p className="text-sm text-destructive">
+                    {String(errors.collegeId?.message)}
+                  </p>
+                )}
+              </div>
+
 
               <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save and Continue'}
@@ -247,5 +281,3 @@ export default function CreateProfilePage() {
     </>
   );
 }
-
-    
