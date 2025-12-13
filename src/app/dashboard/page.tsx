@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, Star, Briefcase, Clock, DollarSign, User, Filter } from "lucide-react";
+import { PlusCircle, Star, Briefcase, Clock, User, Search } from "lucide-react";
 import Link from "next/link";
 import { serviceRequests, serviceProviders, users, colleges } from "@/lib/data";
 import { placeholderImages } from "@/lib/placeholder-images";
@@ -12,28 +12,41 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { useState } from "react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
-// Mock current user for demonstration
-const currentUserId = '1'; 
-const currentUser = users.find(u => u.id === currentUserId);
+type UserProfile = {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  collegeId: string;
+  avatarUrl: string;
+  rating: number;
+  earnings: number;
+  accountType: 'provider' | 'seeker';
+};
+
 
 export default function DashboardPage() {
-    const [providerFilter, setProviderFilter] = useState('all'); // 'all', 'my-college', 'other'
+    const [collegeSearch, setCollegeSearch] = useState('');
+    const [currentUser] = useLocalStorage<UserProfile | null>('userProfile', null);
 
-    const filteredProviders = serviceProviders.filter(provider => {
-        if (providerFilter === 'all') return true;
-        const student = users.find(u => u.id === provider.studentId);
-        if (!student || !currentUser) return false;
-        if (providerFilter === 'my-college') {
-            return student.collegeId === currentUser.collegeId;
-        }
-        if (providerFilter === 'other') {
-            return student.collegeId !== currentUser.collegeId;
-        }
-        return true;
-    });
+    const isProvider = currentUser?.accountType === 'provider';
+
+    const filteredProviders = useMemo(() => {
+        return serviceProviders.filter(provider => {
+            if (!collegeSearch) return true;
+            const student = users.find(u => u.id === provider.studentId);
+            if (!student) return false;
+            const college = colleges.find(c => c.id === student.collegeId);
+            if (!college) return false;
+            return college.name.toLowerCase().includes(collegeSearch.toLowerCase());
+        });
+    }, [collegeSearch]);
+    
+    const defaultTab = isProvider ? "requests" : "providers";
 
     return (
         <div className="container py-8">
@@ -55,77 +68,79 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="requests" className="w-full">
-                <div className="flex justify-between items-center">
-                    <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
-                        <TabsTrigger value="requests">Service Requests</TabsTrigger>
-                        <TabsTrigger value="providers">Service Providers</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="providers" className="m-0">
-                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline">
-                                    <Filter className="mr-2 h-4 w-4" />
-                                    Filter
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuRadioGroup value={providerFilter} onValueChange={setProviderFilter}>
-                                    <DropdownMenuRadioItem value="all">All Colleges</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="my-college">My College</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="other">Other Colleges</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </TabsContent>
-                </div>
-                <TabsContent value="requests">
-                    <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
-                        {serviceRequests.map(request => {
-                            const student = users.find(u => u.id === request.studentId);
-                            const avatar = placeholderImages.find(p => p.id === student?.avatarId);
-                            return (
-                                <Card key={request.id} className="flex flex-col">
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">{request.title}</CardTitle>
-                                        <CardDescription className="line-clamp-2">{request.description}</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="flex-1 space-y-4">
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <Briefcase className="mr-2 h-4 w-4" />
-                                            <span>{request.serviceType}</span>
-                                        </div>
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <span className="font-bold text-lg mr-2">₹</span>
-                                            <span>Budget: {request.budget}</span>
-                                        </div>
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <Clock className="mr-2 h-4 w-4" />
-                                            <span>Deadline: {formatDistanceToNow(request.deadline, { addSuffix: true })}</span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {request.skills.slice(0, 4).map(skill => (
-                                                <Badge key={skill} variant="secondary">{skill}</Badge>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter className="flex justify-between items-center">
-                                       {student && (
-                                            <div className="flex items-center space-x-2 text-sm">
-                                                <Avatar className="h-8 w-8">
-                                                    {avatar && <AvatarImage src={avatar.imageUrl} alt={student.name} />}
-                                                    <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <span>{student.name}</span>
-                                            </div>
-                                       )}
-                                       <Button variant="outline">View & Offer</Button>
-                                    </CardFooter>
-                                </Card>
-                            )
-                        })}
+            <Tabs defaultValue={defaultTab} className="w-full">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    {isProvider ? (
+                        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
+                            <TabsTrigger value="requests">Service Requests</TabsTrigger>
+                            <TabsTrigger value="providers">Service Providers</TabsTrigger>
+                        </TabsList>
+                    ) : (
+                         <h2 className="text-2xl font-semibold">Find a Provider</h2>
+                    )}
+                    <div className="w-full md:w-auto">
+                        <div className="relative">
+                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                             <Input 
+                                 placeholder="Search by college name..."
+                                 className="pl-9 w-full md:w-[300px]"
+                                 value={collegeSearch}
+                                 onChange={(e) => setCollegeSearch(e.target.value)}
+                             />
+                        </div>
                     </div>
-                </TabsContent>
+                </div>
+                
+                {isProvider && (
+                    <TabsContent value="requests">
+                        <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
+                            {serviceRequests.map(request => {
+                                const student = users.find(u => u.id === request.studentId);
+                                const avatar = placeholderImages.find(p => p.id === student?.avatarId);
+                                return (
+                                    <Card key={request.id} className="flex flex-col">
+                                        <CardHeader>
+                                            <CardTitle className="text-lg">{request.title}</CardTitle>
+                                            <CardDescription className="line-clamp-2">{request.description}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="flex-1 space-y-4">
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <Briefcase className="mr-2 h-4 w-4" />
+                                                <span>{request.serviceType}</span>
+                                            </div>
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <span className="font-bold text-lg mr-2">₹</span>
+                                                <span>Budget: {request.budget}</span>
+                                            </div>
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <Clock className="mr-2 h-4 w-4" />
+                                                <span>Deadline: {formatDistanceToNow(request.deadline, { addSuffix: true })}</span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {request.skills.slice(0, 4).map(skill => (
+                                                    <Badge key={skill} variant="secondary">{skill}</Badge>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                        <CardFooter className="flex justify-between items-center">
+                                        {student && (
+                                                <div className="flex items-center space-x-2 text-sm">
+                                                    <Avatar className="h-8 w-8">
+                                                        {avatar && <AvatarImage src={avatar.imageUrl} alt={student.name} />}
+                                                        <AvatarFallback>{student.name.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span>{student.name}</span>
+                                                </div>
+                                        )}
+                                        <Button variant="outline">View & Offer</Button>
+                                        </CardFooter>
+                                    </Card>
+                                )
+                            })}
+                        </div>
+                    </TabsContent>
+                )}
+
                 <TabsContent value="providers">
                      <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
                         {filteredProviders.map(provider => {
