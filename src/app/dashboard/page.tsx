@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -70,6 +69,7 @@ export default function DashboardPage() {
              <Tabs defaultValue="providers">
                 <TabsList>
                     <TabsTrigger value="providers">Service Providers</TabsTrigger>
+                    <TabsTrigger value="bids">Open for Bids</TabsTrigger>
                 </TabsList>
                 <TabsContent value="providers" className="mt-4">
                     <div className="relative mb-6">
@@ -109,6 +109,53 @@ export default function DashboardPage() {
                                     </CardContent>
                                     <CardFooter>
                                         <Button className="w-full">View Profile</Button>
+                                    </CardFooter>
+                                </Card>
+                            )
+                        })}
+                    </div>
+                </TabsContent>
+                <TabsContent value="bids" className="mt-4">
+                    <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
+                        {serviceRequests.map(request => {
+                            const requestor = serviceProviders.find(p => p.id === request.studentId);
+                             const requestorAvatar = requestor ? placeholderImages.find(p => p.id === requestor.avatarId) : null;
+                            
+                            return (
+                                <Card key={request.id}>
+                                    <CardHeader>
+                                        <CardTitle className="line-clamp-2">{request.title}</CardTitle>
+                                        <CardDescription className="flex items-center gap-2 pt-2">
+                                            <Avatar className="h-6 w-6">
+                                                {requestorAvatar && <AvatarImage src={requestorAvatar.imageUrl} alt={requestor?.name} />}
+                                                <AvatarFallback>{requestor?.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span>{requestor?.name}</span>
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3 h-[60px]">{request.description}</p>
+                                         <div className="flex flex-wrap gap-1 mb-4">
+                                            {request.skills.map(skill => (
+                                                <Badge key={skill} variant="outline">{skill}</Badge>
+                                            ))}
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                            <div className="font-bold text-lg text-foreground">₹{request.budget}</div>
+                                            <div className="flex items-center">
+                                                <Clock className="mr-1 h-4 w-4" />
+                                                <span>{formatDistanceToNow(new Date(request.deadline), { addSuffix: true })}</span>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter>
+                                        {currentUser?.id === request.studentId ? (
+                                             <Button className="w-full" variant="secondary">Manage</Button>
+                                        ) : isProvider ? (
+                                            <Button className="w-full">Place Bid</Button>
+                                        ) : (
+                                            <Button className="w-full" disabled>Sign up as Provider to Bid</Button>
+                                        )}
                                     </CardFooter>
                                 </Card>
                             )
