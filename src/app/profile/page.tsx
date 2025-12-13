@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SiteHeader } from '@/components/common/site-header';
 import { users, serviceRequests as mockRequests, colleges } from '@/lib/data';
 import { placeholderImages } from '@/lib/placeholder-images';
-import { Star, Edit, DollarSign, Sparkles, Loader2 } from 'lucide-react';
+import { Star, Edit, DollarSign, Sparkles, Loader2, Save } from 'lucide-react';
 import { recommendSkillsForProvider } from '@/ai/flows/skill-recommendation-for-providers';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,33 +19,42 @@ import { BackButton } from '@/components/common/back-button';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { ServiceRequestForm } from '@/app/services/new/page';
 
-// Mock current user
-const currentUser = users[0];
-const userAvatar = placeholderImages.find(p => p.id === currentUser.avatarId);
-const userCollege = colleges.find(c => c.id === currentUser.collegeId);
-
-// Mock skills
-const initialSkills = ['Graphic Design', 'Logo Design', 'Adobe Illustrator', 'Branding', 'UI/UX'];
+// In a real app, this would come from an auth hook like useUser()
+const currentUserId = '1'; 
 
 type StoredRequest = ServiceRequestForm & { id: string; status: string; };
 
 export default function ProfilePage() {
     const { toast } = useToast();
+
+    // In a real app, these would be fetched from your database for the current user
+    const [currentUser, setCurrentUser] = useState(() => users.find(u => u.id === currentUserId)!);
+    const userAvatar = placeholderImages.find(p => p.id === currentUser.avatarId);
+    const userCollege = colleges.find(c => c.id === currentUser.collegeId);
+    
     const [isEditing, setIsEditing] = useState(false);
     const [profileSummary, setProfileSummary] = useState("I'm a third-year design student specializing in branding and digital illustration. I have experience with Adobe Creative Suite and have completed several freelance logo design projects. I'm passionate about creating visually compelling identities for clubs and student startups.");
-    const [skills, setSkills] = useState<string[]>(initialSkills);
+    const [skills, setSkills] = useState<string[]>(['Graphic Design', 'Logo Design', 'Adobe Illustrator', 'Branding', 'UI/UX']);
     const [isAiLoading, setIsAiLoading] = useState(false);
-    const [myRequests, setMyRequests] = useLocalStorage<StoredRequest[]>('my-requests', []);
     
-    // Combine mock requests with locally stored requests
+    // This simulates fetching requests created by the user
+    const [myRequests] = useLocalStorage<StoredRequest[]>('my-requests', []);
     const allUserRequests = [...mockRequests.filter(r => r.studentId === currentUser.id), ...myRequests];
 
     const handleGetRecommendations = async () => {
+        if (!profileSummary) {
+            toast({
+                variant: 'destructive',
+                title: 'Profile Summary Needed',
+                description: 'Please write a summary before getting AI recommendations.'
+            });
+            return;
+        }
         setIsAiLoading(true);
         try {
             const result = await recommendSkillsForProvider({
                 profileSummary: profileSummary,
-                servicesInDemand: "Currently, there is high demand for web development (React, Next.js), mobile app development, video editing for social media, and academic tutoring in STEM subjects.",
+                servicesInDemand: "High demand for web development (React, Next.js), mobile app development, video editing for social media, and academic tutoring in STEM subjects.",
             });
             
             const newSkills = [...new Set([...skills, ...result.recommendedSkills])];
@@ -65,6 +75,15 @@ export default function ProfilePage() {
         } finally {
             setIsAiLoading(false);
         }
+    };
+
+    const handleSaveChanges = () => {
+        // In a real app, this would save the profileSummary and skills to the database
+        setIsEditing(false);
+        toast({
+            title: "Profile Saved!",
+            description: "Your changes have been saved successfully."
+        });
     }
 
     return (
@@ -95,10 +114,17 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                         </div>
-                        <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            {isEditing ? 'View Profile' : 'Edit Profile'}
-                        </Button>
+                        {isEditing ? (
+                             <Button onClick={handleSaveChanges}>
+                                <Save className="mr-2 h-4 w-4" />
+                                Save Changes
+                            </Button>
+                        ) : (
+                            <Button variant="outline" onClick={() => setIsEditing(true)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Profile
+                            </Button>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -152,11 +178,11 @@ export default function ProfilePage() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>My Skills & Profile</CardTitle>
-                                <CardDescription>This is how others find you.</CardDescription>
+                                {!isEditing && <CardDescription>This is how others find you.</CardDescription>}
                             </CardHeader>
                             <CardContent>
                                 {isEditing ? (
-                                    <div className="mb-4 space-y-4">
+                                    <div className="space-y-4">
                                         <div>
                                             <Label htmlFor="summary">Profile Summary</Label>
                                             <Textarea 
@@ -175,11 +201,14 @@ export default function ProfilePage() {
                                 ) : (
                                     <p className='text-sm text-muted-foreground mb-4'>{profileSummary}</p>
                                 )}
-                                <div className="flex flex-wrap gap-2">
+                                 <div className="flex flex-wrap gap-2 mt-4">
                                     {skills.map(skill => (
-                                        <Badge key={skill} variant="default">{skill}</Badge>
+                                        <Badge key={skill} variant="secondary">{skill}</Badge>
                                     ))}
                                 </div>
+                                {isEditing && (
+                                    <p className='text-xs text-muted-foreground mt-2'>Your skills will update based on AI suggestions.</p>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
