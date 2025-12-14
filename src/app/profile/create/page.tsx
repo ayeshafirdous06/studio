@@ -75,7 +75,6 @@ export default function CreateProfilePage() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
-  const [isGoogleSignIn, setIsGoogleSignIn] = useState(false);
   
   const approvedColleges = colleges.filter(c => c.approvalStatus);
 
@@ -111,7 +110,6 @@ export default function CreateProfilePage() {
       if (data.name) setValue('name', data.name);
       if (data.username) setValue('username', data.username);
       if (data.collegeId) setValue('collegeId', data.collegeId);
-      if (data.isGoogleSignIn) setIsGoogleSignIn(true);
     } catch (e) {
       console.error("Could not parse signup data from local storage");
       if (!user) {
@@ -172,7 +170,7 @@ export default function CreateProfilePage() {
         toast({
             variant: 'destructive',
             title: 'Authentication Error',
-            description: 'Could not verify user. Please wait a moment and try again, or log out and log back in.',
+            description: 'Could not verify user. Please try again or log in again.',
         });
         return;
     }
@@ -192,12 +190,12 @@ export default function CreateProfilePage() {
         const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
         const fullProfile = { 
           id: user.uid,
-          email: user.email || signupData?.email, // Prefer user.email but fallback to signupData
+          email: signupData.email,
           name: data.name,
           username: data.username,
           collegeId: data.collegeId,
           avatarUrl: data.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${data.name}`,
-          accountType: signupData?.accountType || 'seeker',
+          accountType: signupData.accountType,
           age: data.age,
           pronouns: data.pronouns,
           interests: data.interests,
@@ -210,7 +208,7 @@ export default function CreateProfilePage() {
 
         // Save to Firestore
         const userDocRef = doc(firestore, 'users', user.uid);
-        await setDoc(userDocRef, fullProfile, { merge: true });
+        await setDoc(userDocRef, fullProfile);
 
         // Save to local storage for immediate access
         setUserProfile(fullProfile);
@@ -279,7 +277,7 @@ export default function CreateProfilePage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="e.g., Jane Doe" {...form.register('name')} disabled={isGoogleSignIn} />
+                  <Input id="name" placeholder="e.g., Jane Doe" {...form.register('name')} />
                   {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                 </div>
 
@@ -449,3 +447,4 @@ export default function CreateProfilePage() {
   );
 }
 
+    

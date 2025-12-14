@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { colleges } from "@/lib/data";
-import { GoogleAuthProvider, signInWithRedirect, createUserWithEmailAndPassword, signInWithEmailAndPassword, FirebaseError, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, FirebaseError } from 'firebase/auth';
 import { useAuth } from '@/firebase';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -52,11 +52,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState<boolean>(false);
   const auth = useAuth();
-  
-  const [phone, setPhone] = React.useState('');
-  const [otp, setOtp] = React.useState('');
-  const [confirmationResult, setConfirmationResult] = React.useState<ConfirmationResult | null>(null);
-  const [phoneAuthStep, setPhoneAuthStep] = React.useState<'enter-phone' | 'enter-otp'>('enter-phone');
+  const firestore = getFirestore();
 
   const approvedColleges = colleges.filter(c => c.approvalStatus);
 
@@ -66,65 +62,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     resolver: zodResolver(schema),
     defaultValues: mode === 'signup' ? { accountType } : {},
   });
-  
-  React.useEffect(() => {
-    if (!auth) return;
-    // Delay reCAPTCHA setup to ensure auth is ready
-    const timer = setTimeout(() => {
-        if (!(window as any).recaptchaVerifier) {
-            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-                'size': 'invisible',
-                'callback': (response: any) => {
-                    // reCAPTCHA solved, allow signInWithPhoneNumber.
-                },
-            });
-        }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [auth]);
-
-
-  const handleSendOtp = async () => {
-    setIsLoading(true);
-    try {
-      const appVerifier = (window as any).recaptchaVerifier;
-      const result = await signInWithPhoneNumber(auth, `+${phone}`, appVerifier);
-      setConfirmationResult(result);
-      setPhoneAuthStep('enter-otp');
-      toast({ title: 'OTP Sent!', description: 'An OTP has been sent to your phone number.' });
-    } catch (error) {
-      console.error("Phone sign-in error", error);
-       toast({
-          variant: "destructive",
-          title: "Phone Sign-In Failed",
-          description: "Could not send OTP. Please check the number and try again.",
-      });
-    } finally {
-        setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!confirmationResult) return;
-    setIsLoading(true);
-    try {
-      await confirmationResult.confirm(otp);
-      // On successful login, just go to the dashboard.
-      // The dashboard layout will handle fetching the profile or redirecting.
-      router.push("/dashboard");
-
-    } catch (error) {
-       console.error("OTP verification error", error);
-       toast({
-          variant: "destructive",
-          title: "Verification Failed",
-          description: "The OTP is incorrect. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
 
   const generateUsernameFromEmail = (email: string | null): string => {
     if (!email) return '';
@@ -143,23 +80,47 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        // Set the accountType in localStorage so it can be retrieved after the redirect
-        localStorage.setItem('pendingAccountType', accountType);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-        await signInWithRedirect(auth, provider);
-        // After this, the user is redirected to Google.
-        // After they sign in, they are redirected back to the app.
-        // The onAuthStateChanged listener in FirebaseProvider and the logic
-        // in DashboardLayout will handle the rest.
+      // After successful sign-in, check if a profile exists in Firestore.
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        // Profile exists, user is a returning user.
+        // Save profile to local storage and redirect to dashboard.
+        localStorage.setItem('userProfile', JSON.stringify({ id: user.uid, ...userDocSnap.data() }));
+        router.push("/dashboard");
+      } else {
+        // No profile exists, this is a first-time sign-in.
+        // Prepare signup data and redirect to profile creation.
+        const signupPayload = {
+          email: user.email,
+          name: user.displayName,
+          uid: user.uid,
+          username: generateUsernameFromEmail(user.email),
+          accountType: accountType, // Use the accountType from the page
+        };
+        localStorage.setItem('signupData', JSON.stringify(signupPayload));
+        router.push("/profile/create");
+      }
     } catch (error) {
-        console.error("Google sign-in error", error);
-        toast({
-            variant: "destructive",
-            title: "Google Sign-In Failed",
-            description: "Could not start Google Sign-In. Please try again.",
-        });
-        localStorage.removeItem('pendingAccountType'); // Clean up on error
-        setIsGoogleLoading(false);
+      const firebaseError = error as FirebaseError;
+      console.error("Google sign-in error", firebaseError);
+      let description = "Could not sign in with Google. Please try again.";
+      if (firebaseError.code === 'auth/popup-closed-by-user') {
+        description = "Sign-in was cancelled. Please try again.";
+      } else if (firebaseError.code === 'auth/popup-blocked') {
+        description = "Popup was blocked by the browser. Please allow popups for this site.";
+      }
+      toast({
+        variant: "destructive",
+        title: "Google Sign-In Failed",
+        description,
+      });
+    } finally {
+      setIsGoogleLoading(false);
     }
   }
 
@@ -185,7 +146,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
               email: user.email,
               name: name, // Use the name from the form
               uid: user.uid,
-              isGoogleSignIn: false,
               username: generateUsernameFromEmail(user.email),
               collegeId,
               accountType,
@@ -214,8 +174,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
         const { email, password } = data as LoginFormData;
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            // On successful login, just go to the dashboard.
-            // The dashboard layout will handle fetching the profile or redirecting.
             router.push("/dashboard");
         } catch (error) {
              const firebaseError = error as FirebaseError;
@@ -238,144 +196,92 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
 
   return (
     <div className={cn("grid gap-6 bg-card p-8 rounded-lg border", className)} {...props}>
-      <Tabs defaultValue="email" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="phone">Phone</TabsTrigger>
-        </TabsList>
-        <TabsContent value="email">
-             <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4">
-                <div className="grid gap-4">
-                {mode === "signup" && (
-                    <div className="grid gap-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                            id="name"
-                            placeholder="e.g., Jane Doe"
-                            disabled={isLoading || isGoogleLoading}
-                            {...form.register("name")}
-                        />
-                        {form.formState.errors.name && (
-                            <p className="text-sm text-destructive">{String(form.formState.errors.name.message)}</p>
-                        )}
-                    </div>
-                )}
-                <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                    id="email"
-                    placeholder="name@example.com"
-                    type="email"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    autoCorrect="off"
-                    disabled={isLoading || isGoogleLoading}
-                    {...form.register("email")}
-                    />
-                    {form.formState.errors.email && (
-                    <p className="text-sm text-destructive">
-                        {String(form.formState.errors.email?.message)}
-                    </p>
-                    )}
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                    id="password"
-                    type="password"
-                    disabled={isLoading || isGoogleLoading}
-                    {...form.register("password")}
-                    />
-                    {form.formState.errors.password && (
-                    <p className="text-sm text-destructive">
-                        {String(form.formState.errors.password?.message)}
-                    </p>
-                    )}
-                </div>
-                {mode === "signup" && (
-                    <>
-                    <input type="hidden" {...form.register("accountType")} />
-                    <div className="grid gap-2">
-                        <Label htmlFor="college">College</Label>
-                        <Select onValueChange={(value) => form.setValue('collegeId', value, { shouldValidate: true })} disabled={isLoading || isGoogleLoading}>
-                        <SelectTrigger id="college">
-                            <SelectValue placeholder={"Select your college"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {approvedColleges.length > 0 ? (
-                            approvedColleges.map((college) => (
-                                <SelectItem key={college.id} value={college.id}>
-                                {college.name}
-                                </SelectItem>
-                            ))
-                            ) : (
-                                <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
-                            )}
-                        </SelectContent>
-                        </Select>
-                        {form.formState.errors.collegeId && (
-                        <p className="text-sm text-destructive">
-                            {String(form.formState.errors.collegeId?.message)}
-                        </p>
-                        )}
-                    </div>
-                    </>
-                )}
-                <Button disabled={isLoading || isGoogleLoading} className="mt-2 w-full">
-                    {isLoading && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {mode === "login" ? "Sign In" : "Create Account"}
-                </Button>
-                </div>
-            </form>
-        </TabsContent>
-        <TabsContent value="phone">
-            <div className="grid gap-4 mt-4">
-                {phoneAuthStep === 'enter-phone' ? (
-                     <div className="grid gap-2">
-                        <Label htmlFor="phone">Phone Number (with country code)</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                id="phone"
-                                placeholder="+919876543210"
-                                type="tel"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <Button onClick={handleSendOtp} disabled={isLoading || !phone}>
-                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                             Send OTP
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="grid gap-2">
-                        <Label htmlFor="otp">Enter OTP</Label>
-                        <Input
-                            id="otp"
-                            placeholder="123456"
-                            type="text"
-                             value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            disabled={isLoading}
-                        />
-                         <Button onClick={handleVerifyOtp} disabled={isLoading || !otp}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Verify OTP & Continue
-                        </Button>
-                        <Button variant="link" size="sm" onClick={() => setPhoneAuthStep('enter-phone')} className="text-muted-foreground">
-                            Back to phone number entry
-                        </Button>
-                    </div>
-                )}
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="grid gap-4">
+          {mode === "signup" && (
+            <div className="grid gap-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                placeholder="e.g., Jane Doe"
+                disabled={isLoading || isGoogleLoading}
+                {...form.register("name")}
+              />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">{String(form.formState.errors.name.message)}</p>
+              )}
             </div>
-        </TabsContent>
-      </Tabs>
-
-
-       <div className="relative">
+          )}
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              placeholder="name@example.com"
+              type="email"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+              disabled={isLoading || isGoogleLoading}
+              {...form.register("email")}
+            />
+            {form.formState.errors.email && (
+              <p className="text-sm text-destructive">
+                {String(form.formState.errors.email?.message)}
+              </p>
+            )}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              disabled={isLoading || isGoogleLoading}
+              {...form.register("password")}
+            />
+            {form.formState.errors.password && (
+              <p className="text-sm text-destructive">
+                {String(form.formState.errors.password?.message)}
+              </p>
+            )}
+          </div>
+          {mode === "signup" && (
+            <>
+              <input type="hidden" {...form.register("accountType")} />
+              <div className="grid gap-2">
+                <Label htmlFor="college">College</Label>
+                <Select onValueChange={(value) => form.setValue('collegeId', value, { shouldValidate: true })} disabled={isLoading || isGoogleLoading}>
+                  <SelectTrigger id="college">
+                    <SelectValue placeholder={"Select your college"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {approvedColleges.length > 0 ? (
+                      approvedColleges.map((college) => (
+                        <SelectItem key={college.id} value={college.id}>
+                          {college.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                        <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.collegeId && (
+                  <p className="text-sm text-destructive">
+                    {String(form.formState.errors.collegeId?.message)}
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+          <Button disabled={isLoading || isGoogleLoading} className="mt-2 w-full">
+            {isLoading && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {mode === "login" ? "Sign In" : "Create Account"}
+          </Button>
+        </div>
+      </form>
+      <div className="relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t" />
         </div>
@@ -398,7 +304,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
         )}
         Google
       </Button>
-      <div id="recaptcha-container"></div>
     </div>
   );
 }
