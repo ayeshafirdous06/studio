@@ -25,51 +25,58 @@ export default function DashboardLayout({
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    if (isUserLoading) {
-      return; 
-    }
-
-    if (!user) {
-      router.replace("/");
-      return;
-    }
-
-    const checkForProfile = async () => {
-      const localProfile = localStorage.getItem('userProfile');
-      if (localProfile) {
-        const parsedProfile = JSON.parse(localProfile);
-        if (parsedProfile.id === user.uid) {
-           setAuthChecked(true);
-           return;
+    // Fail-safe timeout: never block UI indefinitely
+    const authTimeout = setTimeout(() => {
+      if (!authChecked) {
+        console.warn("Auth timeout — redirecting to home for stability.");
+        // If auth state is still unresolved after timeout, redirect to prevent getting stuck
+        if (!user) {
+            router.replace("/");
         }
+        setAuthChecked(true); // Mark as checked to unblock UI
+      }
+    }, 3000); // 3-second timeout
+
+    // This is the main auth checking logic
+    const checkAuthAndProfile = async () => {
+      if (isUserLoading) {
+        return; // Wait until Firebase has determined the auth state
       }
 
+      if (!user) {
+        router.replace("/"); // No user found, redirect to home
+        return;
+      }
+      
+      // User is authenticated, now check for their profile
       try {
         if (!firestore) {
           console.error("Firestore not available");
-          setAuthChecked(true); 
+          setAuthChecked(true); // Unblock UI even if firestore is down
           return;
         }
         const userDocRef = doc(firestore, 'users', user.uid);
         const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-          const profileData = { id: user.uid, ...userDocSnap.data() } as UserProfile;
-          localStorage.setItem('userProfile', JSON.stringify(profileData));
+        if (!userDocSnap.exists()) {
+          router.replace('/profile/create'); // New user, needs to create a profile
         } else {
-          router.replace('/profile/create');
-          return;
+           const profileData = { id: user.uid, ...userDocSnap.data() } as UserProfile;
+           localStorage.setItem('userProfile', JSON.stringify(profileData));
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
       } finally {
-        setAuthChecked(true);
+        setAuthChecked(true); // Mark auth as checked
       }
     };
 
-    checkForProfile();
+    checkAuthAndProfile();
 
-  }, [user, isUserLoading, router, firestore]);
+    // Cleanup the timeout if the component unmounts or effect re-runs
+    return () => clearTimeout(authTimeout);
+
+  }, [user, isUserLoading, router, firestore, authChecked]);
 
   if (!authChecked || isUserLoading) {
     return (
