@@ -84,7 +84,9 @@ export default function ProfilePage() {
 
     const handleLogout = async () => {
         try {
-            await signOut(auth);
+            if (auth) {
+                await signOut(auth);
+            }
             localStorage.removeItem('userProfile');
             toast({
                 title: 'Signed Out',
@@ -229,7 +231,9 @@ export default function ProfilePage() {
                         <div className="relative">
                             <Avatar className="h-24 w-24 md:h-32 md:w-32 border">
                                 {previewImage && <AvatarImage src={previewImage} alt={currentUser.name} />}
-                                <AvatarFallback className="text-4xl">{currentUser.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback className="text-4xl">
+                                    {currentUser?.name?.charAt(0) || 'U'}
+                                </AvatarFallback>
                             </Avatar>
                              {isEditing && (
                                 <div className="absolute bottom-0 right-0">
