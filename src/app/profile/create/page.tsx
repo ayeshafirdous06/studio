@@ -28,9 +28,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { colleges } from '@/lib/data';
 import { Textarea } from '@/components/ui/textarea';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { doc } from 'firebase/firestore';
+import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 const interestsList = [
   { id: 'editing', label: 'Editing' },
@@ -63,6 +65,7 @@ export default function CreateProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userProfile, setUserProfile] = useLocalStorage<any>('userProfile', null);
   const [signupData, setSignupData] = useState<any>(null);
@@ -185,7 +188,7 @@ export default function CreateProfilePage() {
         const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
         const fullProfile = { 
           id: user.uid,
-          email: user.email, // Use the email from the authenticated user object
+          email: user.email,
           name: data.name,
           username: data.username,
           collegeId: data.collegeId,
@@ -200,6 +203,10 @@ export default function CreateProfilePage() {
           rating: isProvider ? 4.5 + Math.random() * 0.5 : 0, // Mock rating for new providers
           earnings: 0,
         }; 
+
+        // Save to Firestore
+        const userDocRef = doc(firestore, 'users', user.uid);
+        setDocumentNonBlocking(userDocRef, fullProfile, { merge: true });
 
         // Save to local storage for immediate access
         setUserProfile(fullProfile);
