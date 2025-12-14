@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
-    --background: 38 50% 96.5%; /* Milk */
+    --background: 40 36% 85%; /* Muted Champagne */
     --foreground: 0 0% 11.4%; /* Text on light */
 
-    --card: 38 50% 96.5%; /* Milk */
+    --card: 40 36% 85%; /* Muted Champagne */
     --card-foreground: 0 0% 11.4%; /* Text on light */
 
-    --popover: 38 50% 96.5%; /* Milk */
+    --popover: 40 36% 85%; /* Muted Champagne */
     --popover-foreground: 0 0% 11.4%; /* Text on light */
 
     --primary: 44 49% 55%; /* Gold */
@@ -26,7 +26,7 @@
     --accent-foreground: 0 0% 11.4%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 38 50% 96.5%;
+    --destructive-foreground: 40 36% 85%;
 
     --border: 0 0% 89%; /* Dividers */
     --input: 0 0% 89%; /* Dividers */
@@ -39,10 +39,10 @@
     --background: 0 0% 7.1%; /* Black */
     --foreground: 0 0% 100%; /* Text on dark */
 
-    --card: 38 50% 96.5%; /* Milk */
+    --card: 40 36% 85%; /* Muted Champagne */
     --card-foreground: 0 0% 11.4%; /* Text on light */
 
-    --popover: 38 50% 96.5%; /* Milk */
+    --popover: 40 36% 85%; /* Muted Champagne */
     --popover-foreground: 0 0% 11.4%; /* Text on light */
 
     --primary: 44 49% 55%; /* Gold */
