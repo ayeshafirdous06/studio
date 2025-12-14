@@ -157,11 +157,11 @@ export default function DashboardPage() {
                  <h2 className="text-2xl font-semibold mb-4">Open for Bids</h2>
                  <div className="grid gap-6 mt-6 md:grid-cols-2 lg:grid-cols-3">
                     {serviceRequests.map(request => {
-                        const requestor = serviceProviders.find(p => p.id === request.studentId);
+                        const requestor = serviceProviders.find(p => p.id === request.userId);
                         const requestorAvatar = requestor ? placeholderImages.find(p => p.id === requestor.avatarId) : null;
                         const acceptedProvider = request.providerId ? serviceProviders.find(p => p.id === request.providerId) : null;
                         
-                        const isMyRequest = currentUser?.id === request.studentId;
+                        const isMyRequest = currentUser?.id === request.userId;
                         const isAccepted = request.status === 'In Progress';
 
                         return (

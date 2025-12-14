@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for the STUDORA Application
  * @author expert-firebase-rules-architect
@@ -15,7 +16,7 @@
  * @Data_Structure
  * - /users/{userId}: A top-level collection for user profiles. Each user owns their document.
  * - /serviceRequests/{serviceRequestId}: A top-level collection for service requests,
- *   allowing for easy public browsing. Ownership is maintained via a `studentId` field.
+ *   allowing for easy public browsing. Ownership is maintained via a `userId` field.
  * - /colleges/{collegeId}: Read-only public data for signed-in users.
  * - /ratings/{ratingId}, /payments/{paymentId}: Top-level collections for future features.
  *
@@ -28,7 +29,7 @@
  *   Creation is restricted to the owner, and updates/deletes are owner-only.
  *
  * @Denormalization_for_Authorization
- * This ruleset relies on denormalized owner IDs (e.g., `studentId`, `raterId`, `payerId`)
+ * This ruleset relies on denormalized owner IDs (e.g., `userId`, `raterId`, `payerId`)
  * directly on documents. This strategy avoids slow and costly `get()` or `exists()`
  * calls for authorization, leading to simpler, faster, and more scalable rules.
  */
@@ -88,33 +89,32 @@ service cloud.firestore {
 
     /**
      * isUserProfileUpdateValid
-     * @description On update, ensures key fields like ID, email, and account type
+     * @description On update, ensures key fields like ID, and email
      * cannot be changed, preserving integrity.
      */
     function isUserProfileUpdateValid() {
         let data = request.resource.data;
         return data.id == resource.data.id
-            && data.email == resource.data.email
-            && data.accountType == resource.data.accountType;
+            && data.email == resource.data.email;
     }
 
 
     /**
      * isValidOwnedDocCreation
-     * @description Validates that a new document correctly sets the 'studentId'
+     * @description Validates that a new document correctly sets the 'userId'
      * field to match the authenticated user's UID.
      */
     function isValidOwnedDocCreation() {
-      return isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      return isSignedIn() && request.resource.data.userId == request.auth.uid;
     }
 
     /**
      * isOwnedDocDataImmutable
-     * @description On update, ensures the 'studentId' of a document
+     * @description On update, ensures the 'userId' of a document
      * cannot be changed, preventing re-assignment of ownership.
      */
     function isOwnedDocDataImmutable() {
-      return request.resource.data.studentId == resource.data.studentId;
+      return request.resource.data.userId == resource.data.userId;
     }
 
 
@@ -178,8 +178,8 @@ service cloud.firestore {
         // A user can only create a service request for themselves.
         allow create: if isValidOwnedDocCreation();
         // The user who created the request can update or delete it.
-        allow update: if isExistingDocOwner('studentId') && isOwnedDocDataImmutable();
-        allow delete: if isExistingDocOwner('studentId');
+        allow update: if isExistingDocOwner('userId') && isOwnedDocDataImmutable();
+        allow delete: if isExistingDocOwner('userId');
         // Any authenticated user can list (query) the entire collection.
         allow list: if isSignedIn();
     }

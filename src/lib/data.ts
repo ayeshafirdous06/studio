@@ -141,7 +141,7 @@ export const serviceProviders = [
 export const serviceRequests = [
     {
         id: 'req-1',
-        studentId: 'user-3',
+        userId: 'user-3',
         title: 'Need a Logo for my College Club',
         description: 'We are starting a new coding club and need a cool, modern logo. Our theme is "Code, Create, Conquer". Looking for something minimalist but impactful.',
         serviceType: 'Design',
@@ -153,7 +153,7 @@ export const serviceRequests = [
     },
     {
         id: 'req-2',
-        studentId: 'user-1',
+        userId: 'user-1',
         title: 'Help with Python for Data Science',
         description: 'I am struggling with the Pandas and Matplotlib libraries for my data science course. I need a tutor for a few sessions to help me understand the concepts.',
         serviceType: 'Tutoring',
@@ -165,7 +165,7 @@ export const serviceRequests = [
     },
     {
         id: 'req-3',
-        studentId: 'user-2',
+        userId: 'user-2',
         title: 'Graduation Photoshoot',
         description: 'Looking for a talented photographer to take some professional photos for my graduation. The ceremony is at Osmania University.',
         serviceType: 'Photography',
@@ -177,7 +177,7 @@ export const serviceRequests = [
     },
     {
         id: 'req-4',
-        studentId: 'user-1',
+        userId: 'user-1',
         title: 'Video Editing for a College Fest Promo',
         description: 'Need a short, punchy promo video for our upcoming college festival. We have the raw footage, just need someone to edit it together with music and graphics.',
         serviceType: 'Video',

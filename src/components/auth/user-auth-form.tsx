@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { colleges } from "@/lib/data";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, FirebaseError } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 
@@ -50,7 +49,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState<boolean>(false);
-  const [, setUserProfile] = useLocalStorage('userProfile', {});
   const auth = useAuth();
 
 
@@ -72,35 +70,15 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        // For Google Sign-In, we assume they need to create a profile first.
-        // The create profile page will handle redirecting if a profile already exists.
-        const googleSignupData = {
-            email: user.email,
-            name: user.displayName,
-            uid: user.uid,
-            isGoogleSignIn: true,
-            username: generateUsernameFromEmail(user.email),
-            // Default to 'seeker', user can't choose this in Google flow
-            accountType: 'seeker' 
-        };
-        localStorage.setItem('signupData', JSON.stringify(googleSignupData));
-        
-        toast({
-            title: "Signed In with Google",
-            description: "Let's set up your profile."
-        });
-        
-        router.push("/profile/create");
-
+        await signInWithPopup(auth, provider);
+        // The dashboard layout will now handle redirection logic.
+        router.push("/dashboard");
     } catch (error) {
         console.error("Google sign-in error", error);
         toast({
             variant: "destructive",
             title: "Google Sign-In Failed",
-            description: "Could not sign in with Google. Please try again.",
+            description: "Could not sign in with Google. Please ensure popups are enabled and try again.",
         });
     } finally {
         setIsGoogleLoading(false);
@@ -117,6 +95,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
+            // Store temporary data for the profile creation page
             const signupPayload = {
               email: user.email,
               name: user.displayName || '',
@@ -128,10 +107,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
             };
             localStorage.setItem('signupData', JSON.stringify(signupPayload));
 
-            toast({
-              title: "Account Created",
-              description: "One more step to set up your profile."
-            });
+            // Redirect to create profile page, which will then redirect to dashboard if profile exists
             router.push("/profile/create");
         } catch (error) {
             const firebaseError = error as FirebaseError;
@@ -154,10 +130,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
         const { email, password } = data as LoginFormData;
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            toast({
-                title: "Signed In",
-                description: "Welcome back!"
-            });
+            // The dashboard layout will now handle redirection logic.
             router.push("/dashboard");
         } catch (error) {
              const firebaseError = error as FirebaseError;
@@ -277,5 +250,3 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     </div>
   );
 }
-
-    
