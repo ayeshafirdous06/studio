@@ -331,5 +331,3 @@
     "reasoning": "The Firestore structure is designed to support the STUDORA application's core features. The `users` collection is the source of truth for user profiles. Service requests are in a top-level collection (`/serviceRequests`) for easy querying and browsing by all users, which simplifies security rules for public read access. User-owned data that isn't public (e.g. private chats) would be nested under `/users/{userId}/...` in a future iteration."
   }
 }
-
-    
