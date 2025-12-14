@@ -86,6 +86,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
             email: user.email,
             name: user.displayName,
             uid: user.uid,
+            isGoogleSignIn: true,
             username: generateUsernameFromEmail(user.email),
             // The account type is not determined here. We can default it or let user choose.
             // Let's keep it simple and default to seeker, user can become a provider via their profile.
@@ -153,7 +154,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
 
 
   return (
-    <div className={cn("grid gap-6", className)} {...props}>
+    <div className={cn("grid gap-6 bg-card p-6 rounded-lg border", className)} {...props}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-4">
           <div className="grid gap-2">

@@ -234,8 +234,7 @@ export default function CreateProfilePage() {
     <>
     <div className="container flex min-h-screen flex-col items-center justify-center py-8">
       <div className="w-full max-w-xl lg:p-8">
-        <BackButton />
-        <Card className="mx-auto">
+        <Card className="mx-auto bg-transparent border-none shadow-none">
           <CardHeader>
             <CardTitle className="text-2xl font-headline">Create Your {isProvider ? "Provider" : ""} Profile</CardTitle>
             <CardDescription>Just one more step. Let's get your profile ready.</CardDescription>
@@ -275,7 +274,7 @@ export default function CreateProfilePage() {
                   <div className="flex items-center gap-2">
                       <Input id="username" placeholder="e.g., jane.doe" {...register('username')} />
                       <Button type="button" variant="ghost" size="icon" onClick={handleGenerateUsernames} disabled={isAiLoading}>
-                          {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-primary" />}
+                          {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-accent" />}
                           <span className="sr-only">Generate Usernames</span>
                       </Button>
                   </div>
