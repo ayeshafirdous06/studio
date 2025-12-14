@@ -7,32 +7,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Send } from 'lucide-react';
+import { Search, Send, Paperclip } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { placeholderImages } from '@/lib/placeholder-images';
 import { users } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 // Mock data for chat conversations
 const conversations = [
   {
     id: 'convo-1',
     userId: '1',
-    lastMessage: 'Sure, I can help with that!',
-    timestamp: '10:40 AM',
+    lastMessage: 'Perfect, I\'ll get started on it right away.',
+    timestamp: '10:45 AM',
     unreadCount: 1,
   },
   {
     id: 'convo-2',
     userId: '2',
-    lastMessage: 'Project is looking great. One more change...',
-    timestamp: '9:15 AM',
+    lastMessage: 'Awesome, thanks!',
+    timestamp: '9:18 AM',
     unreadCount: 0,
   },
    {
     id: 'convo-3',
     userId: '3',
-    lastMessage: 'What time works for you tomorrow?',
+    lastMessage: 'That sounds great! See you then.',
     timestamp: 'Yesterday',
     unreadCount: 0,
   },
@@ -42,21 +43,30 @@ const allMessages: Record<string, { id: string; senderId: string; text: string; 
     'convo-1': [
       { id: 'msg-1', senderId: '1', text: 'Hey! I saw your request for Calculus tutoring.', isCurrentUser: false },
       { id: 'msg-2', senderId: 'current_user', text: 'Hi! Yes, I\'m struggling a bit with integration.', isCurrentUser: true },
-      { id: 'msg-3', senderId: '1', text: 'Sure, I can help with that!', isCurrentUser: false },
+      { id: 'msg-3', senderId: '1', text: 'I can definitely help with that. I charge ₹500/hour.', isCurrentUser: false },
+      { id: 'msg-1a', senderId: 'current_user', text: 'That works for me. Are you free this Wednesday?', isCurrentUser: true },
+      { id: 'msg-1b', senderId: '1', text: 'Yes, 4 PM works for me.', isCurrentUser: false },
+      { id: 'msg-1c', senderId: '1', text: 'Perfect, I\'ll get started on it right away.', isCurrentUser: false },
+
     ],
     'convo-2': [
       { id: 'msg-4', senderId: '2', text: 'The logo looks good!', isCurrentUser: false },
       { id: 'msg-5', senderId: 'current_user', text: 'Thanks! Let me know if you need any revisions.', isCurrentUser: true },
-       { id: 'msg-6', senderId: '2', text: 'Project is looking great. One more change...', isCurrentUser: false },
+       { id: 'msg-6', senderId: '2', text: 'Project is looking great. One more change... could you make the secondary color a bit lighter?', isCurrentUser: false },
+       { id: 'msg-2a', senderId: 'current_user', text: 'No problem, I\'ll send over a new version shortly.', isCurrentUser: true },
+       { id: 'msg-2b', senderId: '2', text: 'Awesome, thanks!', isCurrentUser: false },
     ],
     'convo-3': [
       { id: 'msg-7', senderId: '3', text: 'Can you help me with my graduation photoshoot?', isCurrentUser: false },
        { id: 'msg-8', senderId: '3', text: 'What time works for you tomorrow?', isCurrentUser: false },
+       { id: 'msg-3a', senderId: 'current_user', text: 'I\'m available after 2 PM. We can meet at the main library.', isCurrentUser: true },
+       { id: 'msg-3b', senderId: '3', text: 'That sounds great! See you then.', isCurrentUser: false },
     ],
 }
 
 
 export default function MessagesPage() {
+  const { toast } = useToast();
   const [activeChatId, setActiveChatId] = useState(conversations[0].id);
   const activeChatConvo = conversations.find(c => c.id === activeChatId);
   const activeChatUser = activeChatConvo ? users.find(u => u.id === activeChatConvo.userId) : null;
@@ -65,6 +75,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState(allMessages[activeChatId]);
   const [newMessage, setNewMessage] = useState('');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +90,17 @@ export default function MessagesPage() {
 
     setMessages([...messages, message]);
     setNewMessage('');
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      toast({
+        title: 'File Selected',
+        description: `You have selected "${file.name}".`,
+      });
+      // In a real app, you would handle the file upload here.
+    }
   };
 
   useEffect(() => {
@@ -128,7 +150,7 @@ export default function MessagesPage() {
                       {avatar && <AvatarImage src={avatar.imageUrl} alt={user.name} />}
                       <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
+                    <div className="flex-1 overflow-hidden">
                       <div className="font-semibold">{user.name}</div>
                       <p className="text-sm text-muted-foreground truncate">{convo.lastMessage}</p>
                     </div>
@@ -192,14 +214,29 @@ export default function MessagesPage() {
                 </div>
                 </div>
                 <div className="p-4 border-t">
-                  <form onSubmit={handleSendMessage} className="relative">
+                  <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Paperclip className="h-5 w-5 text-muted-foreground" />
+                      <span className="sr-only">Attach file</span>
+                    </Button>
                     <Input 
                       placeholder="Type your message..." 
-                      className="pr-12"
+                      className="flex-1"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                     />
-                    <Button type="submit" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8">
+                    <Button type="submit" size="icon">
                       <Send className="h-4 w-4" />
                       <span className="sr-only">Send</span>
                     </Button>
