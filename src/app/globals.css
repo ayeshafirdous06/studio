@@ -4,13 +4,13 @@
 
 @layer base {
   :root {
-    --background: 40 36% 85%; /* Muted Champagne */
+    --background: 31 30% 92%; /* Pearly Beige */
     --foreground: 0 0% 11.4%; /* Text on light */
 
-    --card: 40 36% 85%; /* Muted Champagne */
+    --card: 31 30% 92%; /* Pearly Beige */
     --card-foreground: 0 0% 11.4%; /* Text on light */
 
-    --popover: 40 36% 85%; /* Muted Champagne */
+    --popover: 31 30% 92%; /* Pearly Beige */
     --popover-foreground: 0 0% 11.4%; /* Text on light */
 
     --primary: 44 49% 55%; /* Gold */
@@ -26,7 +26,7 @@
     --accent-foreground: 0 0% 11.4%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 40 36% 85%;
+    --destructive-foreground: 31 30% 92%;
 
     --border: 0 0% 89%; /* Dividers */
     --input: 0 0% 89%; /* Dividers */
@@ -39,10 +39,10 @@
     --background: 0 0% 7.1%; /* Black */
     --foreground: 0 0% 100%; /* Text on dark */
 
-    --card: 40 36% 85%; /* Muted Champagne */
+    --card: 31 30% 92%; /* Pearly Beige */
     --card-foreground: 0 0% 11.4%; /* Text on light */
 
-    --popover: 40 36% 85%; /* Muted Champagne */
+    --popover: 31 30% 92%; /* Pearly Beige */
     --popover-foreground: 0 0% 11.4%; /* Text on light */
 
     --primary: 44 49% 55%; /* Gold */
