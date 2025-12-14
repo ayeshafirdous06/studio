@@ -96,7 +96,7 @@ export default function DashboardPage() {
                             <Card key={provider.id}>
                                 <CardHeader className="flex flex-col items-center text-center">
                                     <CardTitle className="text-2xl mb-2">{provider.name}</CardTitle>
-                                     <Avatar className="h-24 w-24 mb-2">
+                                     <Avatar className="h-24 w-24 mb-2 border">
                                         {providerAvatar && <AvatarImage src={providerAvatar.imageUrl} alt={provider.name} />}
                                         <AvatarFallback className="text-3xl">{provider.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
@@ -151,11 +151,11 @@ export default function DashboardPage() {
                         const isAccepted = request.status === 'In Progress';
 
                         return (
-                            <Card key={request.id} className={cn(isAccepted && "bg-muted/50 border-dashed")}>
+                            <Card key={request.id} className={cn(isAccepted && "bg-muted/20 border-dashed")}>
                                 <CardHeader>
                                     <CardTitle className="line-clamp-2">{request.title}</CardTitle>
                                     <CardDescription className="flex items-center gap-2 pt-2">
-                                        <Avatar className="h-6 w-6">
+                                        <Avatar className="h-6 w-6 border">
                                             {requestorAvatar && <AvatarImage src={requestorAvatar.imageUrl} alt={requestor?.name} />}
                                             <AvatarFallback>{requestor?.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
@@ -169,9 +169,9 @@ export default function DashboardPage() {
                                             <Badge key={skill} variant="outline">{skill}</Badge>
                                         ))}
                                     </div>
-                                    <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                    <div className="flex justify-between items-center text-sm">
                                         <div className="font-bold text-lg text-foreground">₹{request.budget}</div>
-                                        <div className="flex items-center">
+                                        <div className="flex items-center text-muted-foreground">
                                             <Clock className="mr-1 h-4 w-4" />
                                             <span>{formatDistanceToNow(new Date(request.deadline), { addSuffix: true })}</span>
                                         </div>
@@ -179,7 +179,7 @@ export default function DashboardPage() {
                                 </CardContent>
                                 <CardFooter className="flex flex-col items-start gap-3">
                                     {isAccepted && acceptedProvider && (
-                                        <div className="w-full text-center text-sm p-2 rounded-md bg-accent text-accent-foreground flex items-center justify-center gap-2">
+                                        <div className="w-full text-center text-sm p-2 rounded-md bg-accent/20 text-accent-foreground flex items-center justify-center gap-2">
                                             <CheckCircle2 className="h-4 w-4" />
                                             <span>Offer accepted from @{acceptedProvider.username}</span>
                                         </div>

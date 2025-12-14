@@ -246,7 +246,7 @@ export default function CreateProfilePage() {
                 <div className="flex flex-col items-center space-y-4">
                     <Avatar className="h-28 w-28 border-4 border-muted">
                       <AvatarImage src={previewImage ?? ''} />
-                      <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
+                      <AvatarFallback className="text-3xl bg-secondary text-secondary-foreground">
                           {getValues('name')?.charAt(0) || 'U'}
                       </AvatarFallback>
                     </Avatar>
@@ -297,22 +297,28 @@ export default function CreateProfilePage() {
 
                 <div className="grid gap-2">
                   <Label htmlFor="college">College</Label>
-                  <Select onValueChange={(value) => setValue('collegeId', value, { shouldValidate: true })} disabled={isSubmitting} defaultValue={getValues('collegeId')}>
-                    <SelectTrigger id="college">
-                      <SelectValue placeholder={"Select your college"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {approvedColleges.length > 0 ? (
-                        approvedColleges.map((college) => (
-                          <SelectItem key={college.id} value={college.id}>
-                            {college.name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                          <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={form.control}
+                    name="collegeId"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isSubmitting}>
+                        <SelectTrigger id="college">
+                          <SelectValue placeholder={"Select your college"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {approvedColleges.length > 0 ? (
+                            approvedColleges.map((college) => (
+                              <SelectItem key={college.id} value={college.id}>
+                                {college.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                              <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                   />
                   {errors.collegeId && (
                     <p className="text-sm text-destructive">
                       {String(errors.collegeId?.message)}

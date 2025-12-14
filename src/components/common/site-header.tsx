@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useEffect, useState } from "react";
+import { Skeleton } from "../ui/skeleton";
 
 type UserProfile = {
   name: string;
@@ -39,14 +40,14 @@ export function SiteHeader() {
     { href: "/register/college", label: "For Colleges" },
   ];
 
-  // Hide header on landing/auth pages for a cleaner look
-  if (['/', '/login', '/signup', '/profile/create'].includes(pathname)) {
+  // Hide header on landing page for a cleaner look
+  if (pathname === '/') {
     return null;
   }
 
   const renderUserNav = () => {
     if (isUserLoading) {
-        return <div className="h-10 w-24 rounded-md animate-pulse bg-muted" />;
+        return <Skeleton className="h-10 w-32" />;
     }
 
     if (user || userProfile) {
@@ -57,7 +58,7 @@ export function SiteHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost">
-              <Avatar className="h-8 w-8 mr-2">
+              <Avatar className="h-8 w-8 mr-2 border">
                 {photoURL && <AvatarImage src={photoURL} />}
                 <AvatarFallback>{displayName.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>

@@ -17,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
-      <body className="font-body antialiased min-h-screen flex flex-col">
+    <html lang="en" className={`${inter.variable} dark`}>
+      <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground">
         <FirebaseClientProvider>
           {children}
         </FirebaseClientProvider>
@@ -27,5 +27,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    

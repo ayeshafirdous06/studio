@@ -11,7 +11,7 @@ export default function AccountTypeSelectionPage() {
   const heroImage = placeholderImages.find(p => p.id === 'college-registration');
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
        {heroImage && (
          <div className="absolute inset-0 z-0">
            <Image
@@ -21,11 +21,11 @@ export default function AccountTypeSelectionPage() {
              fill
              className="object-cover"
            />
-           <div className="absolute inset-0 bg-black/60" />
+           <div className="absolute inset-0 bg-black/70" />
          </div>
        )}
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-4 text-white">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center p-4">
         <div className="mx-auto w-full max-w-lg text-center">
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl font-headline">
             Unlock Your Campus Potential
@@ -36,18 +36,18 @@ export default function AccountTypeSelectionPage() {
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Link href="/signup?accountType=provider" passHref>
-              <Card className="transform border-white/20 bg-white/10 text-white backdrop-blur-lg transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-xl">
+              <Card className="transform border-border bg-card text-card-foreground transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/10">
                 <CardHeader>
-                  <Briefcase className="h-8 w-8 text-white mb-2" />
+                  <Briefcase className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-xl font-semibold">
                     Offer a Service
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-white/70 mb-4">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Showcase your talents, connect with peers, and start earning.
                   </p>
-                  <div className="flex items-center justify-end font-semibold">
+                  <div className="flex items-center justify-end font-semibold text-primary">
                     Join as a Provider <ArrowRight className="ml-2 h-4 w-4" />
                   </div>
                 </CardContent>
@@ -55,18 +55,18 @@ export default function AccountTypeSelectionPage() {
             </Link>
             
             <Link href="/signup?accountType=seeker" passHref>
-              <Card className="transform border-white/20 bg-white/10 text-white backdrop-blur-lg transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-xl">
+               <Card className="transform border-border bg-card text-card-foreground transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/10">
                  <CardHeader>
-                  <UserPlus className="h-8 w-8 text-white mb-2" />
+                  <UserPlus className="h-8 w-8 text-primary mb-2" />
                   <CardTitle className="text-xl font-semibold">
                     Request a Service
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-white/70 mb-4">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Find talented students on campus to help with your projects and tasks.
                   </p>
-                   <div className="flex items-center justify-end font-semibold">
+                   <div className="flex items-center justify-end font-semibold text-primary">
                     Join as a Seeker <ArrowRight className="ml-2 h-4 w-4" />
                   </div>
                 </CardContent>
