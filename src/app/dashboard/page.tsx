@@ -30,6 +30,9 @@ type UserProfile = {
   accountType: 'provider' | 'seeker';
   skills?: string[];
   tagline?: string;
+  age?: number;
+  pronouns?: string;
+  interests?: string[];
 };
 
 

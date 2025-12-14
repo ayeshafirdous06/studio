@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,21 @@ import { colleges } from '@/lib/data';
 import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
+
+const interestsList = [
+  { id: 'editing', label: 'Editing' },
+  { id: 'baking', label: 'Baking' },
+  { id: 'writing', label: 'Writing' },
+  { id: 'drawing', label: 'Drawing' },
+  { id: 'ai-ml', label: 'AI & Machine Learning' },
+  { id: 'gaming', label: 'Gaming' },
+  { id: 'web-dev', label: 'Web Development' },
+  { id: 'photography', label: 'Photography' },
+  { id: 'music', label: 'Music' },
+  { id: 'entrepreneurship', label: 'Entrepreneurship' },
+];
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -40,6 +55,9 @@ const profileSchema = z.object({
   collegeId: z.string({ required_error: "Please select your college." }).min(1, "Please select your college."),
   skills: z.string().optional(), // For providers
   tagline: z.string().optional(),
+  age: z.coerce.number().min(16, "You must be at least 16").optional(),
+  pronouns: z.string().optional(),
+  interests: z.array(z.string()).optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -64,14 +82,7 @@ export default function CreateProfilePage() {
   const isProvider = signupData?.accountType === 'provider';
 
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    getValues,
-    formState: { errors },
-  } = useForm<ProfileForm>({
+  const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: '',
@@ -79,8 +90,12 @@ export default function CreateProfilePage() {
       avatarUrl: '',
       skills: '',
       tagline: '',
+      pronouns: '',
+      interests: [],
     }
   });
+
+  const { register, handleSubmit, setValue, watch, getValues, formState: { errors } } = form;
   
   useEffect(() => {
     try {
@@ -173,6 +188,9 @@ export default function CreateProfilePage() {
           collegeId: data.collegeId,
           avatarUrl: data.avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${data.name}`,
           accountType: signupData?.accountType || 'seeker',
+          age: data.age,
+          pronouns: data.pronouns,
+          interests: data.interests,
           // Provider specific fields
           skills: skillsArray, 
           tagline: data.tagline,
@@ -223,101 +241,167 @@ export default function CreateProfilePage() {
             <CardDescription>Just one more step. Let's get your profile ready.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="flex flex-col items-center space-y-4">
-                  <Avatar className="h-28 w-28 border-4 border-muted">
-                    <AvatarImage src={previewImage ?? ''} />
-                    <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
-                        {getValues('name')?.charAt(0) || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload Photo
-                  </Button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    accept="image/png, image/jpeg, image/gif"
-                  />
-                  {errors.avatarUrl && <p className="text-sm text-destructive">{errors.avatarUrl.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="e.g., Jane Doe" {...register('name')} disabled={isGoogleSignIn} />
-                {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <div className="flex items-center gap-2">
-                    <Input id="username" placeholder="e.g., jane.doe" {...register('username')} />
-                    <Button type="button" variant="ghost" size="icon" onClick={handleGenerateUsernames} disabled={isAiLoading}>
-                        {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-primary" />}
-                        <span className="sr-only">Generate Usernames</span>
+            <Form {...form}>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-28 w-28 border-4 border-muted">
+                      <AvatarImage src={previewImage ?? ''} />
+                      <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
+                          {getValues('name')?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Photo
                     </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      accept="image/png, image/jpeg, image/gif"
+                    />
+                    {errors.avatarUrl && <p className="text-sm text-destructive">{errors.avatarUrl.message}</p>}
                 </div>
-                {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
-              </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="college">College</Label>
-                <Select onValueChange={(value) => setValue('collegeId', value, { shouldValidate: true })} disabled={isSubmitting} defaultValue={getValues('collegeId')}>
-                  <SelectTrigger id="college">
-                    <SelectValue placeholder={"Select your college"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {approvedColleges.length > 0 ? (
-                      approvedColleges.map((college) => (
-                        <SelectItem key={college.id} value={college.id}>
-                          {college.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                        <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                {errors.collegeId && (
-                  <p className="text-sm text-destructive">
-                    {String(errors.collegeId?.message)}
-                  </p>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" placeholder="e.g., Jane Doe" {...register('name')} disabled={isGoogleSignIn} />
+                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <div className="flex items-center gap-2">
+                      <Input id="username" placeholder="e.g., jane.doe" {...register('username')} />
+                      <Button type="button" variant="ghost" size="icon" onClick={handleGenerateUsernames} disabled={isAiLoading}>
+                          {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-primary" />}
+                          <span className="sr-only">Generate Usernames</span>
+                      </Button>
+                  </div>
+                  {errors.username && <p className="text-sm text-destructive">{errors.username.message}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="age">Age</Label>
+                        <Input id="age" type="number" placeholder="e.g., 21" {...register('age')} />
+                        {errors.age && <p className="text-sm text-destructive">{errors.age.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="pronouns">Pronouns</Label>
+                        <Input id="pronouns" placeholder="e.g., she/her" {...register('pronouns')} />
+                        {errors.pronouns && <p className="text-sm text-destructive">{errors.pronouns.message}</p>}
+                    </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="college">College</Label>
+                  <Select onValueChange={(value) => setValue('collegeId', value, { shouldValidate: true })} disabled={isSubmitting} defaultValue={getValues('collegeId')}>
+                    <SelectTrigger id="college">
+                      <SelectValue placeholder={"Select your college"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {approvedColleges.length > 0 ? (
+                        approvedColleges.map((college) => (
+                          <SelectItem key={college.id} value={college.id}>
+                            {college.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                          <SelectItem value="no-colleges" disabled>No approved colleges available.</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.collegeId && (
+                    <p className="text-sm text-destructive">
+                      {String(errors.collegeId?.message)}
+                    </p>
+                  )}
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="interests"
+                  render={() => (
+                    <FormItem>
+                      <div className="mb-4">
+                        <FormLabel className="text-base">Interests</FormLabel>
+                        <FormDescription>
+                          Select a few of your interests.
+                        </FormDescription>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {interestsList.map((item) => (
+                          <FormField
+                            key={item.id}
+                            control={form.control}
+                            name="interests"
+                            render={({ field }) => {
+                              return (
+                                <FormItem
+                                  key={item.id}
+                                  className="flex flex-row items-start space-x-3 space-y-0"
+                                >
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={field.value?.includes(item.id)}
+                                      onCheckedChange={(checked) => {
+                                        return checked
+                                          ? field.onChange([...(field.value || []), item.id])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== item.id
+                                              )
+                                            )
+                                      }}
+                                    />
+                                  </FormControl>
+                                  <FormLabel className="font-normal">
+                                    {item.label}
+                                  </FormLabel>
+                                </FormItem>
+                              )
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {errors.interests && <p className="text-sm text-destructive">{errors.interests.message}</p>}
+                    </FormItem>
+                  )}
+                />
+                
+                {isProvider && (
+                  <>
+                  <div className="space-y-2">
+                    <Label htmlFor="tagline">Profile Tagline</Label>
+                    <Input
+                      id="tagline"
+                      placeholder="e.g., Full-Stack Developer & CS Tutor"
+                      {...register('tagline')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="skills">Your Skills</Label>
+                    <Textarea
+                      id="skills"
+                      placeholder="e.g., Web Design, Tutoring, Video Editing, Baking..."
+                      {...register('skills')}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      List the services you want to offer, separated by commas.
+                    </p>
+                    {errors.skills && <p className="text-sm text-destructive">{errors.skills.message}</p>}
+                  </div>
+                  </>
                 )}
-              </div>
-              
-              {isProvider && (
-                <>
-                <div className="space-y-2">
-                  <Label htmlFor="tagline">Profile Tagline</Label>
-                  <Input
-                    id="tagline"
-                    placeholder="e.g., Full-Stack Developer & CS Tutor"
-                    {...register('tagline')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="skills">Your Skills</Label>
-                  <Textarea
-                    id="skills"
-                    placeholder="e.g., Web Design, Tutoring, Video Editing, Baking..."
-                    {...register('skills')}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    List the services you want to offer, separated by commas.
-                  </p>
-                  {errors.skills && <p className="text-sm text-destructive">{errors.skills.message}</p>}
-                </div>
-                </>
-              )}
 
 
-              <Button type="submit" disabled={isSubmitting || isUserLoading} className="w-full">
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save and Continue'}
-              </Button>
-            </form>
+                <Button type="submit" disabled={isSubmitting || isUserLoading} className="w-full">
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save and Continue'}
+                </Button>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>

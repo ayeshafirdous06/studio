@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SiteHeader } from '@/components/common/site-header';
 import { colleges } from '@/lib/data';
-import { Star, Edit, DollarSign, Sparkles, Loader2, Save, LogOut } from 'lucide-react';
+import { Star, Edit, DollarSign, Sparkles, Loader2, Save, LogOut, Cake, UserCircle, Tag } from 'lucide-react';
 import { recommendSkillsForProvider } from '@/ai/flows/skill-recommendation-for-providers';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +37,9 @@ type UserProfile = {
   accountType: 'provider' | 'seeker';
   skills?: string[];
   tagline?: string;
+  age?: number;
+  pronouns?: string;
+  interests?: string[];
 };
 
 export default function ProfilePage() {
@@ -208,6 +211,22 @@ export default function ProfilePage() {
                         <div className="flex-1 text-center md:text-left">
                             <h1 className="text-3xl font-bold font-headline">{currentUser.name}</h1>
                             <p className="text-muted-foreground">@{currentUser.username} &middot; Student at {userCollege?.name || 'their college'}</p>
+                            
+                            <div className="flex items-center justify-center md:justify-start mt-2 space-x-4 text-sm text-muted-foreground">
+                                {currentUser.age && (
+                                    <div className="flex items-center">
+                                        <Cake className="mr-1.5 h-4 w-4" />
+                                        <span>{currentUser.age} years old</span>
+                                    </div>
+                                )}
+                                {currentUser.pronouns && (
+                                    <div className="flex items-center">
+                                        <UserCircle className="mr-1.5 h-4 w-4" />
+                                        <span>{currentUser.pronouns}</span>
+                                    </div>
+                                )}
+                            </div>
+
                             {isProvider && (
                                 <div className="flex items-center justify-center md:justify-start mt-2">
                                     <div className="flex items-center">
@@ -294,7 +313,7 @@ export default function ProfilePage() {
                             )}
                         </Tabs>
                     </div>
-                    <div>
+                    <div className="space-y-8">
                         <Card>
                             <CardHeader>
                                 <CardTitle>{isProvider ? "My Skills & Profile" : "My Profile Summary"}</CardTitle>
@@ -335,6 +354,20 @@ export default function ProfilePage() {
                                 )}
                             </CardContent>
                         </Card>
+                        {currentUser.interests && currentUser.interests.length > 0 && (
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle>Interests</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-wrap gap-2">
+                                        {currentUser.interests.map(interest => (
+                                            <Badge key={interest} variant="outline">{interest}</Badge>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 </div>
             </div>

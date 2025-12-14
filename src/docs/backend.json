@@ -55,34 +55,54 @@
           "description": "The user's full name."
         },
         "username": {
-            "type": "string",
-            "description": "The user's unique username."
+          "type": "string",
+          "description": "The user's unique username."
         },
         "avatarUrl": {
-            "type": "string",
-            "description": "URL for the user's profile picture."
+          "type": "string",
+          "description": "URL for the user's profile picture."
         },
         "accountType": {
-            "type": "string",
-            "description": "The type of account, either 'seeker' or 'provider'.",
-            "enum": ["seeker", "provider"]
+          "type": "string",
+          "description": "The type of account, either 'seeker' or 'provider'.",
+          "enum": [
+            "seeker",
+            "provider"
+          ]
         },
         "skills": {
           "type": "array",
           "description": "A list of skills offered by the service provider.",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "tagline": {
-            "type": "string",
-            "description": "A short, descriptive tagline for a service provider."
+          "type": "string",
+          "description": "A short, descriptive tagline for a service provider."
         },
         "rating": {
-            "type": "number",
-            "description": "The user's average rating as a provider."
+          "type": "number",
+          "description": "The user's average rating as a provider."
         },
         "earnings": {
-            "type": "number",
-            "description": "Total earnings for a service provider."
+          "type": "number",
+          "description": "Total earnings for a service provider."
+        },
+        "age": {
+          "type": "number",
+          "description": "The age of the user."
+        },
+        "pronouns": {
+          "type": "string",
+          "description": "The user's preferred pronouns."
+        },
+        "interests": {
+          "type": "array",
+          "description": "A list of the user's interests.",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
@@ -109,8 +129,8 @@
           "description": "Reference to User (the student who posted the request)."
         },
         "title": {
-            "type": "string",
-            "description": "The title of the service request."
+          "type": "string",
+          "description": "The title of the service request."
         },
         "serviceType": {
           "type": "string",
@@ -130,8 +150,10 @@
           "description": "The budget allocated for the service request."
         },
         "skills": {
-            "type": "array",
-            "items": {"type": "string"}
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [
