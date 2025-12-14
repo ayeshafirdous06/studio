@@ -1,11 +1,38 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Colleges: Publicly readable by any authenticated user.
+    // Write access is disabled from the client for now to protect data integrity.
+    match /colleges/{collegeId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Users: Can only read and write their own document.
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Service Requests: Readable by all authenticated users.
+    // Users can create requests. Only the author can update/delete their own request.
+    match /serviceRequests/{serviceRequestId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Ratings: Access is restricted for now.
+    // Rules should be defined when the feature is implemented.
+    match /ratings/{ratingId} {
+      allow read, write: if false;
+    }
+
+    // Payments: Access is restricted for now.
+    // Rules should be defined when the feature is implemented.
+    match /payments/{paymentId} {
+      allow read, write: if false;
+    }
   }
 }
-
-    
