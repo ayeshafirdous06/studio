@@ -3,7 +3,7 @@
 
 import { SiteHeader } from "@/components/common/site-header";
 import { FirebaseClientProvider } from "@/firebase";
-import { useAuth }_from_ '@/firebase';
+import { useAuth } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { doc, getDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
@@ -38,6 +38,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // Auth is resolved, user exists, but we need to check for a Firestore profile
     const checkProfile = async () => {
+      if (!firestore || !user) return;
       const userDocRef = doc(firestore, 'users', user.uid);
       try {
         const userDoc = await getDoc(userDocRef);
