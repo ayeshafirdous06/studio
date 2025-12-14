@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { colleges } from "@/lib/data";
-import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, FirebaseError, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { useAuth } from '@/firebase';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword, FirebaseError, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, User } from 'firebase/auth';
+import { useAuth, useFirestore } from '@/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -50,7 +50,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
-  const firestore = getFirestore();
+  const firestore = useFirestore();
 
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState<boolean>(false);
@@ -71,51 +71,18 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     defaultValues: mode === 'signup' ? { accountType } : {},
   });
 
-  React.useEffect(() => {
-    if (!auth) return;
-    
-    // Handle redirect result from Google sign-in
-    const checkRedirectResult = async () => {
-        setIsGoogleLoading(true);
-        try {
-            const result = await getRedirectResult(auth);
-            if (result && result.user) {
-                await handleSuccessfulLogin(result.user);
-            }
-        } catch (error) {
-            const firebaseError = error as FirebaseError;
-            console.error("Google sign-in redirect error", firebaseError);
-            let description = "Could not sign in with Google. Please try again.";
-            toast({ variant: "destructive", title: "Google Sign-In Failed", description });
-        } finally {
-            setIsGoogleLoading(false);
-        }
-    };
-    checkRedirectResult();
-
-    // Set up reCAPTCHA verifier for phone auth
-    if (authMethod === 'phone') {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-          'size': 'invisible',
-          'callback': () => {
-            // reCAPTCHA solved, allow signInWithPhoneNumber.
-          }
-        });
-    }
-
-    return () => {
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-      }
-    }
-  }, [auth, authMethod]);
-
   const generateUsernameFromEmail = (email: string | null): string => {
     if (!email) return '';
     return email.split('@')[0].replace(/[^a-z0-9_.]/g, '').toLowerCase();
   };
-
-  const handleSuccessfulLogin = async (user: any) => {
+  
+  const handleSuccessfulLogin = React.useCallback(async (user: User) => {
+    if (!firestore) {
+        toast({ variant: "destructive", title: "Database Error", description: "Could not connect to database." });
+        setIsLoading(false);
+        setIsGoogleLoading(false);
+        return;
+    }
     const userDocRef = doc(firestore, "users", user.uid);
     const userDocSnap = await getDoc(userDocRef);
 
@@ -135,8 +102,58 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
       localStorage.setItem('signupData', JSON.stringify(signupPayload));
       router.push("/profile/create");
     }
-  };
+  }, [firestore, router, accountType, toast]);
 
+
+  React.useEffect(() => {
+    if (!auth) return;
+    
+    // Set up reCAPTCHA verifier for phone auth
+    const setupRecaptcha = () => {
+        if (!window.recaptchaVerifier) {
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+              'size': 'invisible',
+              'callback': () => {
+                // reCAPTCHA solved
+              }
+            });
+        }
+    }
+    if (authMethod === 'phone') {
+        setupRecaptcha();
+    }
+    
+    // Handle redirect result from Google sign-in
+    const checkRedirectResult = async () => {
+        setIsGoogleLoading(true);
+        try {
+            const result = await getRedirectResult(auth);
+            if (result && result.user) {
+                toast({ title: "Signed In!", description: "Welcome back." });
+                await handleSuccessfulLogin(result.user);
+            } else {
+                setIsGoogleLoading(false);
+            }
+        } catch (error) {
+            const firebaseError = error as FirebaseError;
+            console.error("Google sign-in redirect error", firebaseError);
+            let description = "Could not sign in with Google. Please try again.";
+            if (firebaseError.code === 'auth/account-exists-with-different-credential') {
+                description = "An account already exists with this email address. Please sign in with your original method.";
+            }
+            toast({ variant: "destructive", title: "Google Sign-In Failed", description });
+            setIsGoogleLoading(false);
+        }
+    };
+    
+    checkRedirectResult();
+
+    return () => {
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+    }
+  }, [auth, handleSuccessfulLogin, toast, authMethod]);
 
   async function handleGoogleSignIn() {
     if (!auth) {
@@ -147,7 +164,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider); // This will redirect the user
   }
-
 
   async function onSubmit(data: z.infer<typeof schema>) {
     if (!auth) {
@@ -168,6 +184,8 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
             const firebaseError = error as FirebaseError;
             console.error("Signup error:", firebaseError);
             toast({ variant: "destructive", title: "Sign-Up Failed", description: firebaseError.code === 'auth/email-already-in-use' ? "This email is already in use." : "An unexpected error occurred." });
+        } finally {
+            setIsLoading(false);
         }
     } else {
         const { email, password } = data as LoginFormData;
@@ -178,13 +196,13 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
              const firebaseError = error as FirebaseError;
              console.error("Login error:", firebaseError);
              toast({ variant: "destructive", title: "Login Failed", description: "Invalid email or password." });
+             setIsLoading(false);
         }
     }
-    setIsLoading(false);
   }
 
   async function handleSendOtp() {
-    if (!auth) return;
+    if (!auth || !window.recaptchaVerifier) return;
     setIsPhoneLoading(true);
     try {
       const appVerifier = window.recaptchaVerifier;
@@ -217,6 +235,11 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
 
   return (
     <div className={cn("grid gap-6 bg-card p-8 rounded-lg border", className)} {...props}>
+      {(isLoading || isGoogleLoading) && (
+        <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10 rounded-lg">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      )}
       {authMethod === 'email' ? (
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid gap-4">
@@ -309,7 +332,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
 // Add this to your global types or a suitable place if you don't have one
 declare global {
   interface Window {
-    recaptchaVerifier: RecaptchaVerifier;
+    recaptchaVerifier?: RecaptchaVerifier;
   }
 }
 
