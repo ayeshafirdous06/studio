@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { colleges } from "@/lib/data";
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, FirebaseError, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect, createUserWithEmailAndPassword, signInWithEmailAndPassword, FirebaseError, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -108,17 +108,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
       const userCredential = await confirmationResult.confirm(otp);
       const user = userCredential.user;
 
-      const signupPayload = {
-        name: user.displayName || '',
-        uid: user.uid,
-        isGoogleSignIn: false,
-        isPhoneSignIn: true,
-        username: '', // Will be set on profile creation
-        collegeId: '', // Will be set on profile creation
-        accountType: 'seeker', // Default, can be changed in profile creation
-      };
-      localStorage.setItem('signupData', JSON.stringify(signupPayload));
-
       // After phone verification, we always assume it's a new user or someone who needs to complete their profile
       router.push("/dashboard");
 
@@ -144,30 +133,17 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        const userCredential = await signInWithPopup(auth, provider);
-        const user = userCredential.user;
-
-        // We store minimal info needed to get to the next step.
-        // The dashboard layout will handle fetching or redirecting.
-        const signupPayload = {
-          email: user.email,
-          name: user.displayName || '',
-          uid: user.uid,
-          isGoogleSignIn: true, // Flag to show fields as disabled on create page
-          username: generateUsernameFromEmail(user.email),
-        };
-        localStorage.setItem('signupData', JSON.stringify(signupPayload));
-
-        // ALWAYS go to dashboard after login. The layout will figure out what to do.
-        router.push("/dashboard");
+        // Using signInWithRedirect to avoid popup blockers
+        await signInWithRedirect(auth, provider);
+        // The page will redirect, and the result is handled by onAuthStateChanged/getRedirectResult
+        // in the main layout or root component.
     } catch (error) {
         console.error("Google sign-in error", error);
         toast({
             variant: "destructive",
             title: "Google Sign-In Failed",
-            description: "Could not sign in with Google. Please ensure popups are enabled and try again.",
+            description: "Could not start Google Sign-In. Please try again.",
         });
-    } finally {
         setIsGoogleLoading(false);
     }
   }
@@ -404,4 +380,5 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
   );
 }
 
+    
     
