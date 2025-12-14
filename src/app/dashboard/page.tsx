@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { serviceRequests, serviceProviders } from "@/lib/data";
 import { placeholderImages } from "@/lib/placeholder-images";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 
 type UserProfile = {
