@@ -12,6 +12,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 type UserProfile = {
   id?: string;
   name?: string;
+  accountType?: 'provider' | 'seeker';
 };
 
 export default function DashboardLayout({
@@ -23,7 +24,7 @@ export default function DashboardLayout({
   const firestore = useFirestore();
   const router = useRouter();
   const [userProfile, setUserProfile] = useLocalStorage<UserProfile | null>('userProfile', null);
-  const [isChecking, setIsChecking] = useState(true);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
 
   useEffect(() => {
     // This effect handles authentication and profile checks.
@@ -44,7 +45,7 @@ export default function DashboardLayout({
     const checkUserProfile = async () => {
       // If profile is already in local storage and matches the current user, we are good.
       if (userProfile && userProfile.id === user.uid) {
-        setIsChecking(false);
+        setIsCheckingProfile(false);
         return;
       }
       
@@ -57,16 +58,20 @@ export default function DashboardLayout({
 
           if (userDocSnap.exists()) {
             // Profile exists in Firestore, save it to local storage for future loads.
-            const profileFromDb = userDocSnap.data();
-            setUserProfile(profileFromDb as UserProfile);
+            const profileFromDb = userDocSnap.data() as UserProfile;
+            setUserProfile({ ...profileFromDb, id: user.uid });
           } else {
             // No profile exists in the database for this authenticated user.
-            // This means they need to create one.
+            // This means they need to create one. This can happen with Google Sign-In on first login.
+            const pendingAccountType = localStorage.getItem('pendingAccountType') || 'seeker';
+            localStorage.removeItem('pendingAccountType');
+
             const signupPayload = {
               email: user.email,
               name: user.displayName || '',
               uid: user.uid,
               isGoogleSignIn: user.providerData.some(p => p.providerId === 'google.com'),
+              accountType: pendingAccountType,
             };
             localStorage.setItem('signupData', JSON.stringify(signupPayload));
             router.replace("/profile/create");
@@ -76,8 +81,11 @@ export default function DashboardLayout({
           // Failsafe: redirect home on error to prevent getting stuck
           router.replace("/"); 
         } finally {
-            setIsChecking(false);
+            setIsCheckingProfile(false);
         }
+      } else {
+        // Firestore not available yet, stop checking for now.
+        setIsCheckingProfile(false);
       }
     };
 
@@ -86,7 +94,7 @@ export default function DashboardLayout({
   }, [user, isUserLoading, router, firestore, userProfile, setUserProfile]);
 
   // While loading auth state or checking profile, show a skeleton screen.
-  if (isUserLoading || isChecking) {
+  if (isUserLoading || isCheckingProfile) {
     return (
       <div className="relative flex min-h-screen flex-col">
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -97,7 +105,10 @@ export default function DashboardLayout({
         </header>
         <main className="flex-1 p-8">
             <div className="flex h-screen items-center justify-center">
-                <Skeleton className="h-48 w-full max-w-lg" />
+                 <div className="flex items-center space-x-2">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-dashed border-primary"></div>
+                    <span className="text-muted-foreground">Signing in...</span>
+                </div>
             </div>
         </main>
       </div>
@@ -112,3 +123,5 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+    

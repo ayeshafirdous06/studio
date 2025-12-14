@@ -129,9 +129,20 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
   };
 
   async function handleGoogleSignIn() {
+    if (!auth) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Firebase is not ready. Please try again in a moment.",
+      });
+      return;
+    }
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
+        // Set the accountType in localStorage so it can be retrieved after the redirect
+        localStorage.setItem('pendingAccountType', accountType);
+
         await signInWithRedirect(auth, provider);
         // After this, the user is redirected to Google.
         // After they sign in, they are redirected back to the app.
@@ -144,12 +155,21 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
             title: "Google Sign-In Failed",
             description: "Could not start Google Sign-In. Please try again.",
         });
+        localStorage.removeItem('pendingAccountType'); // Clean up on error
         setIsGoogleLoading(false);
     }
   }
 
 
   async function onSubmit(data: z.infer<typeof schema>) {
+    if (!auth) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Firebase is not ready. Please try again in a moment.",
+      });
+      return;
+    }
     setIsLoading(true);
 
     if (mode === 'signup') {
@@ -379,3 +399,5 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     </div>
   );
 }
+
+    
