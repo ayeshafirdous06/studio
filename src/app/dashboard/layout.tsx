@@ -26,40 +26,45 @@ export default function DashboardLayout({
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // Wait until the initial user loading is complete
     if (isUserLoading) {
       return; 
     }
 
+    // After loading, if there's no user, they are not logged in.
     if (!user) {
       router.replace("/");
       return;
     }
 
-    // User is authenticated, now check for profile
+    // If we reach here, the user is authenticated. Now, check for their profile.
     const checkUserProfile = async () => {
+      // If profile is already in local storage and matches current user, we're good.
       if (userProfile && userProfile.id === user.uid) {
-        // Profile is in local storage and matches the current user, we're good.
         setIsChecking(false);
         return;
       }
 
-      // Profile not in local storage, try fetching from Firestore
-      try {
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
+      // If not, try fetching it from Firestore.
+      if (firestore) {
+        try {
+          const userDocRef = doc(firestore, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-          const profileFromDb = userDocSnap.data();
-          setUserProfile(profileFromDb as UserProfile);
-          setIsChecking(false);
-        } else {
-          // No profile in Firestore, this is a new user who needs to create one.
-          router.replace("/profile/create");
+          if (userDocSnap.exists()) {
+            const profileFromDb = userDocSnap.data();
+            setUserProfile(profileFromDb as UserProfile);
+            setIsChecking(false);
+          } else {
+            // No profile exists in the database for this authenticated user.
+            // This means they need to create one.
+            router.replace("/profile/create");
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          // Failsafe: redirect home on error to prevent getting stuck
+          router.replace("/"); 
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        // Maybe redirect to an error page or show a toast
-        router.replace("/"); // Failsafe
       }
     };
 
@@ -67,7 +72,7 @@ export default function DashboardLayout({
 
   }, [user, isUserLoading, userProfile, router, firestore, setUserProfile]);
 
-  // While loading or checking, show a skeleton screen.
+  // While loading auth state or checking profile, show a skeleton screen.
   if (isUserLoading || isChecking) {
     return (
       <div className="relative flex min-h-screen flex-col">
@@ -89,6 +94,7 @@ export default function DashboardLayout({
     );
   }
 
+  // Once all checks are passed, render the actual layout and children
   return (
     <div className="relative flex min-h-screen flex-col">
       <SiteHeader />
@@ -96,5 +102,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-
-    
