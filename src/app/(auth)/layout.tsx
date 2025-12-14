@@ -1,7 +1,11 @@
+
 import type { Metadata } from 'next';
 import '../globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: 'Welcome to STUDORA',
@@ -14,11 +18,13 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground">
-      <FirebaseClientProvider>
-        {children}
-      </FirebaseClientProvider>
-      <Toaster />
-    </div>
+    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
+      <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground">
+        <FirebaseClientProvider>
+          {children}
+        </FirebaseClientProvider>
+        <Toaster />
+      </body>
+    </html>
   );
 }

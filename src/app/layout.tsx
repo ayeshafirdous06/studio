@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
@@ -17,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
-      <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground dark">
+    <html lang="en" className={`${inter.variable} dark`} suppressHydrationWarning>
+      <body className="font-body antialiased min-h-screen flex flex-col bg-background text-foreground">
         <FirebaseClientProvider>
           {children}
         </FirebaseClientProvider>
