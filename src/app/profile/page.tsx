@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SiteHeader } from '@/components/common/site-header';
 import { colleges } from '@/lib/data';
 import { Star, Edit, DollarSign, Sparkles, Loader2, Save, LogOut, Cake, UserCircle, Upload } from 'lucide-react';
 import { recommendSkillsForProvider } from '@/ai/flows/skill-recommendation-for-providers';
@@ -171,7 +170,6 @@ export default function ProfilePage() {
     if (isLoading) {
         return (
              <>
-                <SiteHeader />
                 <div className="container py-8">
                     <Skeleton className="h-8 w-24 mb-4" />
                     <Card className="mb-8">
@@ -202,7 +200,6 @@ export default function ProfilePage() {
     if (!currentUser || !currentUser.id) {
         return (
             <>
-                <SiteHeader />
                 <div className="container py-8 text-center">
                      <div className="absolute inset-0 -z-10 h-full w-full bg-background bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
                     <Card className="max-w-md mx-auto">
@@ -222,7 +219,6 @@ export default function ProfilePage() {
 
     return (
         <>
-            <SiteHeader />
             <div className="container py-8">
                 <BackButton />
                 <Card className="mb-8">
