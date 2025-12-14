@@ -64,7 +64,7 @@ export default function CreateProfilePage() {
   const { toast } = useToast();
   const { user, isUserLoading } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userProfile, setUserProfile] = useLocalStorage('userProfile', {});
+  const [userProfile, setUserProfile] = useLocalStorage<any>('userProfile', null);
   const [signupData, setSignupData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -95,11 +95,10 @@ export default function CreateProfilePage() {
   const { handleSubmit, setValue, watch, getValues, formState: { errors } } = form;
   
   useEffect(() => {
-    // If a profile already exists in local storage, the user shouldn't be here.
-    // Redirect them to the dashboard.
+    // If a profile already exists in local storage and has an id, the user shouldn't be here.
     if (userProfile && userProfile.id) {
       router.replace('/dashboard');
-      return; // Stop further execution in this effect
+      return; 
     }
     
     try {
@@ -186,7 +185,7 @@ export default function CreateProfilePage() {
         const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
         const fullProfile = { 
           id: user.uid,
-          email: user.email,
+          email: user.email, // Use the email from the authenticated user object
           name: data.name,
           username: data.username,
           collegeId: data.collegeId,

@@ -75,22 +75,25 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        toast({
-            title: "Signed In with Google",
-            description: `Welcome, ${user.displayName}!`
-        });
-
+        // For Google Sign-In, we assume they need to create a profile first.
+        // The create profile page will handle redirecting if a profile already exists.
         const googleSignupData = {
             email: user.email,
             name: user.displayName,
             uid: user.uid,
             isGoogleSignIn: true,
             username: generateUsernameFromEmail(user.email),
+            // Default to 'seeker', user can't choose this in Google flow
             accountType: 'seeker' 
         };
         localStorage.setItem('signupData', JSON.stringify(googleSignupData));
         
-        router.push("/dashboard");
+        toast({
+            title: "Signed In with Google",
+            description: "Let's set up your profile."
+        });
+        
+        router.push("/profile/create");
 
     } catch (error) {
         console.error("Google sign-in error", error);
@@ -151,12 +154,6 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
         const { email, password } = data as LoginFormData;
         try {
             await signInWithEmailAndPassword(auth, email, password);
-
-            // A placeholder profile is set. The dashboard layout will wait for the
-            // real profile to be loaded from Firestore, but this prevents a flicker
-            // where the user is redirected back to login.
-            setUserProfile({ id: 'loading' });
-
             toast({
                 title: "Signed In",
                 description: "Welcome back!"
