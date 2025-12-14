@@ -31,8 +31,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUser, useFirestore } from '@/firebase';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { doc, setDoc } from 'firebase/firestore';
+
 
 const interestsList = [
   { id: 'editing', label: 'Editing' },
@@ -67,7 +67,7 @@ export default function CreateProfilePage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userProfile, setUserProfile] = useLocalStorage<any>('userProfile', null);
+  const [, setUserProfile] = useLocalStorage<any>('userProfile', null);
   const [signupData, setSignupData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -98,32 +98,25 @@ export default function CreateProfilePage() {
   const { handleSubmit, setValue, watch, getValues, formState: { errors } } = form;
   
   useEffect(() => {
-    // If a profile already exists in local storage and has an id, the user shouldn't be here.
-    if (userProfile && userProfile.id) {
-      router.replace('/dashboard');
-      return; 
+    if (isUserLoading) {
+      return; // Wait until user auth state is determined
     }
-    
+
     try {
       const data = JSON.parse(localStorage.getItem('signupData') || '{}');
       setSignupData(data);
-      if (data.name) {
-        setValue('name', data.name);
-      }
-      if (data.username) {
-        setValue('username', data.username);
-      }
-       if (data.collegeId) {
-        setValue('collegeId', data.collegeId);
-      }
-      // A simple check to see if it was a Google sign-in
-      if (data.isGoogleSignIn) {
-        setIsGoogleSignIn(true);
-      }
+      if (data.name) setValue('name', data.name);
+      if (data.username) setValue('username', data.username);
+      if (data.collegeId) setValue('collegeId', data.collegeId);
+      if (data.isGoogleSignIn) setIsGoogleSignIn(true);
     } catch (e) {
       console.error("Could not parse signup data from local storage");
+      // If there's no signup data and no user, they shouldn't be here
+      if (!user) {
+        router.replace('/signup');
+      }
     }
-  }, [setValue, userProfile, router]);
+  }, [isUserLoading, user, setValue, router]);
 
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,7 +181,7 @@ export default function CreateProfilePage() {
         const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
         const fullProfile = { 
           id: user.uid,
-          email: user.email,
+          email: user.email || signupData?.email, // Prefer user.email but fallback to signupData
           name: data.name,
           username: data.username,
           collegeId: data.collegeId,
@@ -206,7 +199,7 @@ export default function CreateProfilePage() {
 
         // Save to Firestore
         const userDocRef = doc(firestore, 'users', user.uid);
-        setDocumentNonBlocking(userDocRef, fullProfile, { merge: true });
+        await setDoc(userDocRef, fullProfile, { merge: true });
 
         // Save to local storage for immediate access
         setUserProfile(fullProfile);
@@ -232,7 +225,7 @@ export default function CreateProfilePage() {
     }
   };
 
-  if (isUserLoading || (userProfile && userProfile.id)) {
+  if (isUserLoading) {
     return (
         <div className="flex h-screen items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />

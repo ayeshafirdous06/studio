@@ -36,6 +36,7 @@ const loginSchema = z.object({
 });
 
 const signupSchema = z.object({
+  name: z.string().min(2, "Name is required."),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
   collegeId: z.string({ required_error: "Please select your college." }).min(1, "Please select your college."),
@@ -104,8 +105,22 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     if (!confirmationResult) return;
     setIsLoading(true);
     try {
-      await confirmationResult.confirm(otp);
-      router.push("/dashboard");
+      const userCredential = await confirmationResult.confirm(otp);
+      const user = userCredential.user;
+
+      const signupPayload = {
+        name: user.displayName || '',
+        uid: user.uid,
+        isGoogleSignIn: false,
+        username: '', // Will be set on profile creation
+        collegeId: '', // Will be set on profile creation
+        accountType: 'seeker', // Default, can be changed in profile creation
+      };
+      localStorage.setItem('signupData', JSON.stringify(signupPayload));
+
+      // After phone verification, we always assume it's a new user or someone who needs to complete their profile
+      router.push("/profile/create");
+
     } catch (error) {
        console.error("OTP verification error", error);
        toast({
@@ -128,7 +143,21 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
+        const userCredential = await signInWithPopup(auth, provider);
+        const user = userCredential.user;
+
+        // We store minimal info needed to get to the next step.
+        // The dashboard layout will handle fetching or redirecting.
+        const signupPayload = {
+          email: user.email,
+          name: user.displayName || '',
+          uid: user.uid,
+          isGoogleSignIn: true, // Flag to show fields as disabled on create page
+          username: generateUsernameFromEmail(user.email),
+        };
+        localStorage.setItem('signupData', JSON.stringify(signupPayload));
+
+        // ALWAYS go to dashboard after login. The layout will figure out what to do.
         router.push("/dashboard");
     } catch (error) {
         console.error("Google sign-in error", error);
@@ -147,14 +176,14 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     setIsLoading(true);
 
     if (mode === 'signup') {
-        const { email, password, collegeId, accountType } = data as SignupFormData;
+        const { name, email, password, collegeId, accountType } = data as SignupFormData;
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
             const signupPayload = {
               email: user.email,
-              name: user.displayName || '',
+              name: name, // Use the name from the form
               uid: user.uid,
               isGoogleSignIn: false,
               username: generateUsernameFromEmail(user.email),
@@ -185,6 +214,8 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
         const { email, password } = data as LoginFormData;
         try {
             await signInWithEmailAndPassword(auth, email, password);
+            // On successful login, just go to the dashboard.
+            // The dashboard layout will handle fetching the profile or redirecting.
             router.push("/dashboard");
         } catch (error) {
              const firebaseError = error as FirebaseError;
@@ -215,6 +246,20 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
         <TabsContent value="email">
              <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4">
                 <div className="grid gap-4">
+                {mode === "signup" && (
+                    <div className="grid gap-2">
+                        <Label htmlFor="name">Full Name</Label>
+                        <Input
+                            id="name"
+                            placeholder="e.g., Jane Doe"
+                            disabled={isLoading || isGoogleLoading}
+                            {...form.register("name")}
+                        />
+                        {form.formState.errors.name && (
+                            <p className="text-sm text-destructive">{String(form.formState.errors.name.message)}</p>
+                        )}
+                    </div>
+                )}
                 <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -276,7 +321,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
                     </div>
                     </>
                 )}
-                <Button disabled={isLoading || isGoogleLoading} className="mt-2">
+                <Button disabled={isLoading || isGoogleLoading} className="mt-2 w-full">
                     {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
@@ -289,20 +334,14 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
             <div className="grid gap-4 mt-4">
                 {phoneAuthStep === 'enter-phone' ? (
                      <div className="grid gap-2">
-                        <Label htmlFor="phone">Phone Number</Label>
+                        <Label htmlFor="phone">Phone Number (with country code)</Label>
                         <div className="flex gap-2">
-                           <Input
-                              id="phone-prefix"
-                              value="+91"
-                              disabled
-                              className="w-16"
-                            />
                             <Input
                                 id="phone"
-                                placeholder="9876543210"
+                                placeholder="+919876543210"
                                 type="tel"
                                 value={phone}
-                                onChange={(e) => setPhone(`91${e.target.value}`)}
+                                onChange={(e) => setPhone(e.target.value)}
                                 disabled={isLoading}
                             />
                         </div>
@@ -324,7 +363,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
                         />
                          <Button onClick={handleVerifyOtp} disabled={isLoading || !otp}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Verify OTP & {mode === 'login' ? 'Log In' : 'Sign Up'}
+                            Verify OTP & Continue
                         </Button>
                         <Button variant="link" size="sm" onClick={() => setPhoneAuthStep('enter-phone')} className="text-muted-foreground">
                             Back to phone number entry
@@ -363,3 +402,5 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
     </div>
   );
 }
+
+    
