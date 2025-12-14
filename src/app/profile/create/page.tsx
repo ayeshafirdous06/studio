@@ -231,7 +231,7 @@ export default function CreateProfilePage() {
     <>
     <div className="container flex min-h-screen flex-col items-center justify-center py-8">
       <div className="w-full max-w-xl lg:p-8">
-        <Card className="mx-auto bg-card">
+        <Card className="mx-auto bg-card p-4 sm:p-6">
           <CardHeader>
             <CardTitle className="text-2xl font-headline">Create Your {isProvider ? "Provider" : ""} Profile</CardTitle>
             <CardDescription>Just one more step. Let's get your profile ready.</CardDescription>

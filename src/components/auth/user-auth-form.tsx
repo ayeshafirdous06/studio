@@ -154,7 +154,7 @@ export function UserAuthForm({ className, mode, accountType = 'seeker', ...props
 
 
   return (
-    <div className={cn("grid gap-6 bg-card p-6 rounded-lg border shadow-sm", className)} {...props}>
+    <div className={cn("grid gap-6 bg-card p-8 rounded-lg border", className)} {...props}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid gap-4">
           <div className="grid gap-2">
