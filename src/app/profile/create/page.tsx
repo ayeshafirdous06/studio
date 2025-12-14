@@ -186,7 +186,7 @@ export default function CreateProfilePage() {
         const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
         const fullProfile = { 
           id: user.uid,
-          email: user.email,
+          email: signupData.email,
           name: data.name,
           username: data.username,
           collegeId: data.collegeId,
