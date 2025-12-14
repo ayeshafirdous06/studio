@@ -85,6 +85,7 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -161,17 +162,16 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
                  <RadioGroup
                     defaultValue="seeker"
                     className="grid grid-cols-2 gap-4"
-                    {...control.register("accountType")}
-                    onValueChange={(value) => control.setValue("accountType", value as 'seeker' | 'provider')}
+                    onValueChange={(value) => setValue("accountType", value as 'seeker' | 'provider')}
                 >
                     <div>
-                        <RadioGroupItem value="seeker" id="seeker" className="peer sr-only" />
+                        <RadioGroupItem value="seeker" id="seeker" className="peer sr-only" {...register("accountType")} />
                         <Label htmlFor="seeker" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                             Service Seeker
                         </Label>
                     </div>
                     <div>
-                        <RadioGroupItem value="provider" id="provider" className="peer sr-only" />
+                        <RadioGroupItem value="provider" id="provider" className="peer sr-only" {...register("accountType")} />
                         <Label htmlFor="provider" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                            Service Provider
                         </Label>
@@ -238,3 +238,5 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
     </div>
   );
 }
+
+    
