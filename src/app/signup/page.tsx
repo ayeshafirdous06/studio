@@ -2,16 +2,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { UserAuthForm } from '@/components/auth/user-auth-form';
-import { BookOpenCheck, ArrowRight } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { BookOpenCheck } from 'lucide-react';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
@@ -31,7 +22,7 @@ export default function SignupPage() {
                 Create an account
               </h1>
               <p className="text-sm text-muted-foreground">
-                Choose your account type and enter your email to get started.
+                Enter your email and password to get started.
               </p>
             </div>
             <UserAuthForm mode="signup" />

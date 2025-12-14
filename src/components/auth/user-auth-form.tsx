@@ -7,13 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithRedirect,
   getRedirectResult,
 } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,7 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
-  const auth = getAuth();
+  const auth = useAuth();
   
   const formSchema = mode === 'login' ? formSchemaLogin : formSchemaSignup;
   type FormData = z.infer<typeof formSchema>;
@@ -110,9 +110,6 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
               const signupData = {
                   email: result.user.email,
                   name: result.user.displayName,
-                  // Google sign in doesn't have account type, so we need a default
-                  // or a way to ask the user. For now, let's default to 'seeker'
-                  // and they can create a profile.
                   accountType: 'seeker', 
               };
               localStorage.setItem('signupData', JSON.stringify(signupData));
@@ -140,7 +137,7 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
       if (mode === 'login') {
         const { email, password } = data as FormDataLogin;
         await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: 'Login Successful!', description: "You're now signed in." });
+        // On successful login, AuthGuard will handle profile checking and redirection.
         router.push('/dashboard');
       } else {
         const { email, password, accountType } = data as FormDataSignup;
@@ -149,7 +146,7 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
         // Store signup data for profile creation page
         const signupData = {
           email: userCredential.user.email,
-          name: userCredential.user.displayName,
+          name: '', // Name will be collected on the create profile page
           accountType,
         };
         localStorage.setItem('signupData', JSON.stringify(signupData));
@@ -173,7 +170,6 @@ export function UserAuthForm({ className, mode, ...props }: UserAuthFormProps) {
     setIsLoading(true);
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
-    // The redirect will happen, and the result is handled in the useEffect
   }
 
   return (

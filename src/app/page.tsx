@@ -1,8 +1,6 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, UserPlus, ArrowRight, School } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { placeholderImages } from '@/lib/placeholder-images';
@@ -35,9 +33,12 @@ export default function AccountTypeSelectionPage() {
             Join STUDORA, the exclusive marketplace for students to offer their skills and find help on campus.
           </p>
           <div className='flex justify-center gap-4 mb-6'>
-            <Link href="/profile/create" passHref>
-                <Button size="lg">Get Started</Button>
-            </Link>
+            <Button size="lg" asChild>
+                <Link href="/signup">Get Started</Link>
+            </Button>
+             <Button size="lg" variant="secondary" asChild>
+                <Link href="/login">Log In</Link>
+            </Button>
           </div>
           <p className="mt-8 text-center text-sm text-white/60">
               Are you a college administrator?{' '}

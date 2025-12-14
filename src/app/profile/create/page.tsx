@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateUsernames } from '@/ai/flows/username-generation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -30,7 +29,10 @@ import { colleges } from '@/lib/data';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
-
+import { useUser } from '@/firebase/auth/use-user';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const interestsList = [
   { id: 'editing', label: 'Editing' },
@@ -63,6 +65,9 @@ type ProfileForm = z.infer<typeof profileSchema>;
 export default function CreateProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [, setUserProfile] = useLocalStorage<any>('userProfile', null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -91,6 +96,22 @@ export default function CreateProfilePage() {
   const { handleSubmit, setValue, watch, getValues, formState: { errors } } = form;
   const accountType = watch('accountType');
   const isProvider = accountType === 'provider';
+
+  useEffect(() => {
+    // Once user is loaded, pre-fill form from localStorage if available
+    if (user && !isUserLoading) {
+        const signupDataStr = localStorage.getItem('signupData');
+        if (signupDataStr) {
+            const signupData = JSON.parse(signupDataStr);
+            if (signupData.name) {
+                setValue('name', signupData.name);
+            }
+            if (signupData.accountType) {
+                setValue('accountType', signupData.accountType);
+            }
+        }
+    }
+  }, [user, isUserLoading, setValue]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -135,13 +156,19 @@ export default function CreateProfilePage() {
 
 
   const onSubmit = async (data: ProfileForm) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to create a profile.' });
+        return;
+    }
+
     setIsSubmitting(true);
 
     try {
         const skillsArray = data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [];
-        const fullProfile = { 
-          id: `user-${Date.now()}`,
-          email: `${data.username}@example.com`,
+        
+        const userProfileData = { 
+          id: user.uid,
+          email: user.email,
           name: data.name,
           username: data.username,
           collegeId: data.collegeId,
@@ -156,8 +183,15 @@ export default function CreateProfilePage() {
           earnings: 0,
         }; 
 
-        // Simulate saving
-        setUserProfile(fullProfile);
+        // Save to Firestore
+        const userDocRef = doc(firestore, 'users', user.uid);
+        await setDoc(userDocRef, userProfileData);
+
+        // Save to local storage for immediate access
+        setUserProfile(userProfileData);
+
+        // Clean up temp signup data
+        localStorage.removeItem('signupData');
 
         toast({ title: 'Profile Created!', description: 'Your profile has been successfully created.' });
         router.push('/dashboard');
@@ -169,6 +203,10 @@ export default function CreateProfilePage() {
         setIsSubmitting(false);
     }
   };
+
+  if (isUserLoading) {
+    return <div className="container flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
 
   return (
     <>

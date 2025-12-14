@@ -18,6 +18,10 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "../ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useUser } from "@/firebase/auth/use-user";
+import { signOut } from 'firebase/auth';
+import { useAuth } from '@/firebase';
+
 
 type UserProfile = {
   name: string;
@@ -26,15 +30,12 @@ type UserProfile = {
 
 export function SiteHeader() {
   const router = useRouter();
+  const auth = useAuth();
   const { toast } = useToast();
   const pathname = usePathname();
-  const [isClient, setIsClient] = useState(false);
+  const { user, isUserLoading } = useUser();
   const [userProfile, setUserProfile] = useLocalStorage<UserProfile | null>('userProfile', null);
 
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const navLinks = [
     { href: "/dashboard", label: "Marketplace" },
@@ -42,14 +43,12 @@ export function SiteHeader() {
     { href: "/register/college", label: "For Colleges" },
   ];
 
-  // Hide header on landing page for a cleaner look
-  if (pathname === '/') {
-    return null;
-  }
-  
   const handleLogout = async () => {
     try {
-        setUserProfile(null);
+        if (auth) {
+            await signOut(auth);
+        }
+        setUserProfile(null); // Clear local storage
         toast({
             title: 'Signed Out',
             description: 'You have been successfully signed out.',
@@ -66,21 +65,21 @@ export function SiteHeader() {
   }
 
   const renderUserNav = () => {
-    if (!isClient) {
+    if (isUserLoading) {
       return <Skeleton className="h-10 w-32 rounded-md" />;
     }
 
-    if (!userProfile) {
+    if (!user) {
       return (
         <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild><Link href="/profile/create">Log In</Link></Button>
-            <Button asChild><Link href="/profile/create">Sign Up</Link></Button>
+            <Button variant="ghost" asChild><Link href="/login">Log In</Link></Button>
+            <Button asChild><Link href="/signup">Sign Up</Link></Button>
         </div>
       );
     }
 
-    const displayName = userProfile.name || 'User';
-    const photoURL = userProfile.avatarUrl;
+    const displayName = userProfile?.name || user.email || 'User';
+    const photoURL = userProfile?.avatarUrl || user.photoURL;
 
     return (
       <DropdownMenu>
@@ -130,7 +129,7 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="transition-colors hover:text-foreground/80 text-foreground/60"
+                className={pathname === link.href ? "text-foreground" : "text-foreground/60 transition-colors hover:text-foreground/80"}
               >
                 {link.label}
               </Link>

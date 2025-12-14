@@ -15,6 +15,7 @@ import { serviceRequests, serviceProviders } from "@/lib/data";
 import { placeholderImages } from "@/lib/placeholder-images";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/firebase/auth/use-user";
 
 
 type UserProfile = {
@@ -34,27 +35,9 @@ type UserProfile = {
   interests?: string[];
 };
 
-// Mock user for UI rendering without real auth
-const mockUser: UserProfile = {
-    id: 'mock-user-1',
-    name: 'Jane Doe',
-    username: 'jane.doe',
-    email: 'jane@example.com',
-    collegeId: 'cbit',
-    avatarUrl: `https://api.dicebear.com/8.x/initials/svg?seed=Jane%20Doe`,
-    accountType: 'provider',
-    skills: ['Web Dev', 'React', 'Tutoring'],
-    tagline: 'Passionate developer and tutor.',
-    rating: 4.8,
-    earnings: 1200,
-    age: 21,
-    pronouns: 'she/her',
-    interests: ['web-dev', 'gaming']
-};
-
-
 export default function DashboardPage() {
-    const [currentUser, setCurrentUser] = useLocalStorage<UserProfile | null>('userProfile', mockUser);
+    const { user } = useUser(); // Using the real user now
+    const [currentUser] = useLocalStorage<UserProfile | null>('userProfile', null);
     
     const [searchQuery, setSearchQuery] = useState('');
     const [sentRequests, setSentRequests] = useState<string[]>([]);
@@ -139,7 +122,7 @@ export default function DashboardPage() {
                                 </CardContent>
                                 <CardFooter className="flex flex-col gap-2">
                                     <Button className="w-full" asChild>
-                                        <Link href="#">View Profile</Link>
+                                        <Link href={`/profile/${provider.username}`}>View Profile</Link>
                                     </Button>
                                     {!isOwnProfile && (
                                         <Button 
