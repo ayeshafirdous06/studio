@@ -4,37 +4,61 @@
 import { SiteHeader } from "@/components/common/site-header";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { FirebaseClientProvider, useUser } from "@/firebase";
+import { FirebaseClientProvider, useFirebase, useFirestore, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { doc, getDoc } from "firebase/firestore";
 
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
-  const [userProfile] = useLocalStorage('userProfile', null);
+  const [userProfile, setUserProfile] = useLocalStorage('userProfile', null);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     if (isUserLoading) {
-      return; // Wait for Firebase to determine auth state
+      return; 
     }
 
-    if (user) {
-      // User is authenticated with Firebase, now check for our app profile
-      if (userProfile && userProfile.id === user.uid) {
-         setAuthChecked(true); // Profile exists and matches, allow access
-      } else {
-        // This could happen if they logged in but didn't finish profile creation.
-        // Or if local storage was cleared.
-        router.replace('/profile/create');
-      }
-    } else {
-      // No user from Firebase, redirect to login
+    if (!user) {
       router.replace('/login');
+      return;
+    }
+    
+    // If we have a user from Firebase, check for the app profile
+    if (user) {
+        // 1. Check local storage first
+        if (userProfile && userProfile.id === user.uid) {
+            setAuthChecked(true); // Profile is in sync
+            return;
+        }
+
+        // 2. If not in local storage, fetch from Firestore
+        const fetchProfile = async () => {
+            const userDocRef = doc(firestore, 'users', user.uid);
+            try {
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                    const profileData = userDoc.data();
+                    setUserProfile(profileData); // Save to local storage
+                    setAuthChecked(true); // Allow access
+                } else {
+                    // Profile doesn't exist in DB, must create it
+                    router.replace('/profile/create');
+                }
+            } catch (error) {
+                console.error("Error fetching user profile:", error);
+                // Maybe redirect to an error page or back to login
+                router.replace('/login');
+            }
+        };
+
+        fetchProfile();
     }
 
-  }, [user, isUserLoading, userProfile, router]);
+  }, [user, isUserLoading, userProfile, router, firestore, setUserProfile]);
 
 
   if (!authChecked || isUserLoading) {
